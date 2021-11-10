@@ -1,0 +1,17 @@
+# Editor
+.mypy_cache
+.vscode
+
+# Temp Files
+*.aux
+*.bbl
+*.bcf
+*.blg
+*.fdb_latexmk
+*.fls
+*.log
+*.run.xml
+*.synctex.gz
+
+# Backups
+Proposal/Versions
