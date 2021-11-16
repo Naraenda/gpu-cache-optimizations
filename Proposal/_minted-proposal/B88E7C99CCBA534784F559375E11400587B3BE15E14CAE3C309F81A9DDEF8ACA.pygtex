@@ -1,0 +1,31 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{n+nf}{generate} \PYG{o+ow}{::} \PYG{p}{(}\PYG{k+kt}{Shape} \PYG{n}{sh}\PYG{p}{,} \PYG{k+kt}{Elt} \PYG{n}{a}\PYG{p}{)}
+\PYG{c+c1}{\PYGZhy{}\PYGZhy{} Shape of array:}
+\PYG{o+ow}{=\PYGZgt{}} \PYG{k+kt}{Exp} \PYG{n}{sh}
+\PYG{c+c1}{\PYGZhy{}\PYGZhy{} Function that generates values from indices:}
+\PYG{o+ow}{\PYGZhy{}\PYGZgt{}} \PYG{p}{(}\PYG{k+kt}{Exp} \PYG{n}{sh} \PYG{o+ow}{\PYGZhy{}\PYGZgt{}} \PYG{k+kt}{Exp} \PYG{n}{a}\PYG{p}{)}
+\PYG{c+c1}{\PYGZhy{}\PYGZhy{} Resulting array:}
+\PYG{o+ow}{\PYGZhy{}\PYGZgt{}} \PYG{k+kt}{Acc} \PYG{p}{(}\PYG{k+kt}{Array} \PYG{n}{sh} \PYG{n}{a}\PYG{p}{)}
+
+\PYG{n+nf}{backpermute} \PYG{o+ow}{::} \PYG{p}{(}\PYG{k+kt}{Shape} \PYG{n}{sh}\PYG{p}{,} \PYG{k+kt}{Shape} \PYG{n}{sh\PYGZsq{}}\PYG{p}{,} \PYG{k+kt}{Elt} \PYG{n}{a}\PYG{p}{)}	
+\PYG{c+c1}{\PYGZhy{}\PYGZhy{} Shape of the result array:}
+\PYG{o+ow}{=\PYGZgt{}} \PYG{k+kt}{Exp} \PYG{n}{sh\PYGZsq{}}	
+\PYG{c+c1}{\PYGZhy{}\PYGZhy{} Index permutation function:}
+\PYG{o+ow}{\PYGZhy{}\PYGZgt{}} \PYG{p}{(}\PYG{k+kt}{Exp} \PYG{n}{sh\PYGZsq{}} \PYG{o+ow}{\PYGZhy{}\PYGZgt{}} \PYG{k+kt}{Exp} \PYG{n}{sh}\PYG{p}{)}	
+\PYG{c+c1}{\PYGZhy{}\PYGZhy{} Source array:}
+\PYG{o+ow}{\PYGZhy{}\PYGZgt{}} \PYG{k+kt}{Acc} \PYG{p}{(}\PYG{k+kt}{Array} \PYG{n}{sh} \PYG{n}{a}\PYG{p}{)}	
+\PYG{c+c1}{\PYGZhy{}\PYGZhy{} Resulting array:}
+\PYG{o+ow}{\PYGZhy{}\PYGZgt{}} \PYG{k+kt}{Acc} \PYG{p}{(}\PYG{k+kt}{Array} \PYG{n}{sh\PYGZsq{}} \PYG{n}{a}\PYG{p}{)}
+
+\PYG{n+nf}{permute} \PYG{o+ow}{::} \PYG{p}{(}\PYG{k+kt}{Shape} \PYG{n}{sh}\PYG{p}{,} \PYG{k+kt}{Shape} \PYG{n}{sh\PYGZsq{}}\PYG{p}{,} \PYG{k+kt}{Elt} \PYG{n}{a}\PYG{p}{)}
+\PYG{c+c1}{\PYGZhy{}\PYGZhy{} Combination function:}
+\PYG{o+ow}{=\PYGZgt{}} \PYG{p}{(}\PYG{k+kt}{Exp} \PYG{n}{a} \PYG{o+ow}{\PYGZhy{}\PYGZgt{}} \PYG{k+kt}{Exp} \PYG{n}{a} \PYG{o+ow}{\PYGZhy{}\PYGZgt{}} \PYG{k+kt}{Exp} \PYG{n}{a}\PYG{p}{)}	
+\PYG{c+c1}{\PYGZhy{}\PYGZhy{} Array of default values (shape is also defined):}
+\PYG{o+ow}{\PYGZhy{}\PYGZgt{}} \PYG{k+kt}{Acc} \PYG{p}{(}\PYG{k+kt}{Array} \PYG{n}{sh\PYGZsq{}} \PYG{n}{a}\PYG{p}{)}	
+\PYG{c+c1}{\PYGZhy{}\PYGZhy{} Index permutation function:}
+\PYG{o+ow}{\PYGZhy{}\PYGZgt{}} \PYG{p}{(}\PYG{k+kt}{Exp} \PYG{n}{sh} \PYG{o+ow}{\PYGZhy{}\PYGZgt{}} \PYG{k+kt}{Exp} \PYG{n}{sh\PYGZsq{}}\PYG{p}{)}	
+\PYG{c+c1}{\PYGZhy{}\PYGZhy{} Array of source values to be permuted:}
+\PYG{o+ow}{\PYGZhy{}\PYGZgt{}} \PYG{k+kt}{Acc} \PYG{p}{(}\PYG{k+kt}{Array} \PYG{n}{sh} \PYG{n}{a}\PYG{p}{)}	
+\PYG{c+c1}{\PYGZhy{}\PYGZhy{} Resulting array:}
+\PYG{o+ow}{\PYGZhy{}\PYGZgt{}} \PYG{k+kt}{Acc} \PYG{p}{(}\PYG{k+kt}{Array} \PYG{n}{sh\PYGZsq{}} \PYG{n}{a}\PYG{p}{)}
+\end{Verbatim}

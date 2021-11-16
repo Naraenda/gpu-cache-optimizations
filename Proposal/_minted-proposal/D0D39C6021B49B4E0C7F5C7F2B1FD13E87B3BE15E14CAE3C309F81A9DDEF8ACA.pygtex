@@ -1,0 +1,9 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{n+nf}{plus3x3s} \PYG{o+ow}{::} \PYG{k+kt}{Stencil3x3} \PYG{n}{a} \PYG{o+ow}{\PYGZhy{}\PYGZgt{}} \PYG{k+kt}{Exp} \PYG{n}{a}
+\PYG{n+nf}{plus3x3s} \PYG{p}{((}\PYG{k+kr}{\PYGZus{}}\PYG{p}{,}\PYG{n}{t}\PYG{p}{,}\PYG{k+kr}{\PYGZus{}}\PYG{p}{)}
+         \PYG{p}{,(}\PYG{n}{l}\PYG{p}{,}\PYG{n}{c}\PYG{p}{,}\PYG{n}{r}\PYG{p}{)}
+         \PYG{p}{,(}\PYG{k+kr}{\PYGZus{}}\PYG{p}{,}\PYG{n}{b}\PYG{p}{,}\PYG{k+kr}{\PYGZus{}}\PYG{p}{))} \PYG{o+ow}{=} \PYG{k+kt}{Prelude}\PYG{o}{.}\PYG{n}{sum} \PYG{o}{\PYGZdl{}} \PYG{k+kt}{Prelude}\PYG{o}{.}\PYG{n}{zipWith} \PYG{p}{(}\PYG{o}{*}\PYG{p}{)} \PYG{n}{kernel} \PYG{p}{[}\PYG{n}{t}\PYG{p}{,}\PYG{n}{l}\PYG{p}{,}\PYG{n}{c}\PYG{p}{,}\PYG{n}{r}\PYG{p}{,}\PYG{n}{b}\PYG{p}{]}
+
+\PYG{n+nf}{plus3x3} \PYG{o+ow}{::} \PYG{k+kt}{Num} \PYG{n}{a} \PYG{o+ow}{=\PYGZgt{}} \PYG{k+kt}{Acc} \PYG{p}{(}\PYG{k+kt}{Matrix} \PYG{n}{a}\PYG{p}{)} \PYG{o+ow}{\PYGZhy{}\PYGZgt{}} \PYG{k+kt}{Acc} \PYG{p}{(}\PYG{k+kt}{Matrix} \PYG{n}{a}\PYG{p}{)}
+\PYG{n+nf}{plus3x3} \PYG{o+ow}{=} \PYG{n}{stencil} \PYG{n}{plus3x3s} \PYG{n}{clamp}
+\end{Verbatim}

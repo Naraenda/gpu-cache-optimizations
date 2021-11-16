@@ -16,6 +16,13 @@
 \usepackage{graphicx}
 \usepackage{pgfplots}
     \usepgfplotslibrary{colorbrewer}
+    \pgfplotsset{compat=1.18}
+\usepackage{minted}
+    \setminted[haskell]{
+        frame=lines,
+        framesep=2mm,
+        linenos
+    }
 
 \setlist{noitemsep, topsep=0pt}
 
@@ -35,10 +42,10 @@
 \section{Introduction}    
 High performance GPU computing has become very accessible via high level frameworks.
 These frameworks provide a limited set of operators, such as stencil, permute, fold, scan, which can manipulate data on a GPU \cite{chakravarty2011accelerating}.
-However, in most cases the compiled assembly has inefficient memory accesses with lower cache hit rates and uncoalesced accesses.
+However, in most cases the compiled assembly has inefficient memory accesses with lower cache hit rates and uncoalesced accesses than manually tweaked code.
 Threads can be scheduled in such a way to minimize these inefficiencies.
 With a smarter scheduler, programs can achieve better cache and memory utilization \cite{nugteren2014study}.
-We propose several specialized thread schedules to improve performance by leveraging the structure of memory accesses in the high level GPGPU framework Accelerate.
+We propose several specialized thread schedules to improve performance by leveraging the structure of memory accesses in the high level GPGPU framework Accelerate \cite{chakravarty2011accelerating}.
 
 \subsection{GPU Architecture}
 Massive parallel workloads are executed on numerous cores clustered in streaming multiprocessors (SMs).
@@ -51,35 +58,40 @@ Data shared between threads through the cache can happen read-after-write (RAW) 
 RAW has data dependency among tasks, for example in scan operations.
 RAR has no data dependency and can be executed in any order \cite{tripathy2021paver}.
 
-The L1 cache in older Nvidia GPU architectures (Maxwell, Pascal) uses the least recently used (LRU) eviction policy, new architectures (Turing, Volta) uses a non-LRU eviction policy \cite{jia2019dissecting, jia2018dissecting,mei2016dissecting}.
-\citet{jia2019dissecting} has shown that in Turing and Volta GPU's, the P-chase benchmark presented by \citet{mei2016dissecting} fails to detect the full L1 cache.
+The L1 cache in older Nvidia GPU architectures (Maxwell, Pascal) uses the least recently used (LRU) eviction policy, new architectures (Turing, Volta) a non-LRU eviction policy \cite{jia2019dissecting, jia2018dissecting,mei2016dissecting}.
+\citet{jia2019dissecting} has shown that in Turing and Volta GPUs, the P-chase benchmark presented by \citet{mei2016dissecting} fails to detect the full L1 cache.
 This is due to the new L1 eviction policy introduced with Volta, where cache lines can be assigned a priority \cite{jia2019dissecting,nvidia2021cudadocs}.
 
-A program instructs what a single thread most do, given certain runtime and constant variables.
+When working with CUDA the programmer defines a kernel.
+This is normally done with CUDA C++, an extension on C++ programming language, but in our case Accelerate will handle the generation of kernels (section \ref{sec:accelerate}).
+The kernel instructs what a single thread most do, given certain runtime and constant variables.
 Executing a program spawns multiple threads, each with their own thread id and corresponding block id.
 These threads are grouped into cooperative thread arrays (CTA), sometimes also called a thread block.
 A CTA gets executed in SIMT in groups called warps which typically contain 32 threads.
-There is a maximum number of threads that can fit a CTA, so we often need multiple.
+There is a maximum number of threads that can fit a CTA, so we often need multiple \cite{nvidia2021cudadocs}.
 
 % Cache hitrate
 % Memory coalescing 
 
 \subsection{Accelerate}
+\label{sec:accelerate}
 Accelerate is an embedded purely functional array language in Haskell \cite{chakravarty2011accelerating}.
 Accelerate has a frontend containing the embedded language, and the backend which handles code generation and execution.
-Programs can be defined within the embedded language, where they may also be optimized via fusion.
+The frontend handles general optimizations such as sharing recovery and array fusion \cite{mcdonell2013optimising,balen2020optimal}.
 Further hardware specific optimization is handled on the various backends.
-There are two backends provided: one that targets multicore CPUs \texttt{accelerate-llvm-native} and one that targets Nvidia GPUs \texttt{accelerate-llvm-ptx}.
-The PTX backend implements a series of CUDA skeletons which implement a series of primitive operations such as stencils, generate, permute, and scan.
+There are two LLVM \cite{llvm} backends provided: one that targets multicore CPUs \texttt{accelerate-llvm-native} and one that targets Nvidia GPUs \texttt{accelerate-llvm-ptx}.
+In both backends we compile Accelerate code to LLVM IR.
+When we want to run Accelerate on the GPU, LLVM will handle the compilation from LLVM IR to PTX, the instructions set for Nvidia's CUDA programming environment\cite{mcdonell2015type, llvm, nvidia2021cudadocs}.
+The GPU backend implements a series of skeletons which implement primitive operations such as stencils, generate, permute, and scan.
 These skeletons define how a program should be compiled and is the part where a custom thread scheduler can be implemented.
 Further customizations to the scheduler can be done on the executing side of the backend as it controls how kernels are launched.
 
 \section{Related Work}
 
 \subsection{Cache Locality}
-\citet{meyer2003algorithms} describes two principles of locality:
+\citeauthor{meyer2003algorithms} describes two principles of locality\cite{meyer2003algorithms}:
 \begin{itemize}
-    \item \textbf{Spatial locality:} Accessing a block of data should contain as much useful data as possible.
+    \item \textbf{Spatial locality:} When accessing a block of data (i.e. a cache line), it should contain as much useful data as possible.
     \item \textbf{Temporal locality:} Once a data block is cached, as much work with it should be done before it is evicted.
 \end{itemize}
 Furthermore, if a program is memory bound, we want to increase either or both types of locality depending on the application and hardware.
@@ -111,7 +123,7 @@ These are executed normally or via an agent based system \cite{li2017locality}.
 \TODO{Relate to proposal}
 
 \subsection{Locality Graph-Based Scheduling}
-\citet{tripathy2021paver} presented a priority aware vertex scheduler (PAVER) for read-after-read programs which expands on the previous work.
+\citeauthor{tripathy2021paver} presented a priority aware vertex scheduler (PAVER) for read-after-read programs which expands on the previous work \cite{tripathy2021paver}.
 PAVER does not work with read-after-write programs, as those might result in a deadlock with the implemented scheduler.
 It derives a locality graph from PTX code which can be partitioned to maximize data sharing between SMs.
 The partitioned work is stored as queue of thread block groups.
@@ -120,8 +132,9 @@ If an SM has no more work, it steals work from other SMs by taking from the tail
 
 \subsection{Stencil Computations}
 Stencil operations update an N-dimensional array according to a fixed pattern surrounding the updated element (fig. \ref{fig:stencil_access_pattern}).
+Accelerate allows stencils to be easily defined (listing \ref{lst:stencil_example}).
 
-\begin{figure}[H]
+\begin{figure}
     \centering
     \begin{tikzpicture}[scale=0.25]
         \fill[gray!50] (2, 2) rectangle +(5, 5);
@@ -134,6 +147,22 @@ Stencil operations update an N-dimensional array according to a fixed pattern su
     \label{fig:stencil_access_pattern}
 \end{figure}
 
+\begin{listing}
+    \begin{minted}{haskell}
+plus3x3s :: Stencil3x3 a -> Exp a
+plus3x3s ((_,t,_)
+         ,(l,c,r)
+         ,(_,b,_)) = Prelude.sum $ Prelude.zipWith (*) kernel [t,l,c,r,b]
+
+plus3x3 :: Num a => Acc (Matrix a) -> Acc (Matrix a)
+plus3x3 = stencil plus3x3s clamp
+    \end{minted}
+    \caption{
+        An example of defining the stencil function \texttt{plus3x3s} and turning it into a stencil operation \texttt{plus3x3}.
+    }
+    \label{lst:stencil_example}
+\end{listing}
+
 Improving the performance of stencil computations have been researched extensively.
 \citet{kamil2006implicit} presented optimizations targeting temporal cache reuse across multiple stencil sweeps via time skewing.
 \citet{zhao2019exploiting} presented a vectorization approach and improvements regarding instruction cache hits.
@@ -144,7 +173,7 @@ However, none of the presented optimizations try to tackle temporal locality wit
 \label{sec:matrix_intro}
 Matrix multiplication take two 2D input matrices to produce a new output matrix $C = AB$ and is defined as
 \[
-    c_{ij} = \sum^n_k{a_{ik}b_{kj}}
+    C_{ij} = \sum^n_k{A_{ik}B_{kj}}
 \]
 In terms of memory accesses, for each element, a row and a column needs to be accessed (fig. \ref{fig:matmult_access_pattern}).
 
@@ -195,10 +224,9 @@ Note that the best bound is $\omega < 2.373$ for $O(n^\omega)$ \cite{alman2018li
     \textbf{Research Question 1}
     \emph{What are the thread schedules for common structured GPGPU operations that result in the fastest execution?}
 \end{mdframed}
-A schedule optimal for one operation may not be optimal for another operation.
-The optimal schedule is also dependent on the shape of the input data.
-We are interested in the theoretical bounds of amounts of cache loads for a given schedule.
-However, the scheduling can result in extra computation time, so we must also check with real world performance metrics.
+Because Accelerate implements operations via skeletons, a lot of the structure of memory accesses can be inferred which could be used to generate more performant schedules.
+We are interested in the theoretical bounds of amounts of cache loads for such a schedule and its comparison to the naive schedule.
+Furthermore, the generation and execution of schedules can result in extra computation time, so we must also check with real world performance metrics.
 
 % Comparison with current state of the art
 \begin{mdframed}
@@ -218,13 +246,14 @@ This allows us to manipulate the schedule depending on various (run-time) parame
 
 \subsection{Specialized Scheduling for Stencil Operations}
 \label{sec:stencil_schedule}
-Naive implementations of 2D stencil operations will go through the workload on a row-by-row basis.
-However, if the input matrix is wide enough, data from the previous row can be unloaded before we can reuse it in the next row.
-\citet{rivera2000tiling} suggest using tiling, including for higher dimension stencil operations however we propose an alternative method: \emph{column grouping}.
-By splitting workload into fixed width columns we can keep as much data of the previous row(s) into cache as needed.
+Naive implementations of 2D stencil operations go through the workload on a row-by-row basis.
+If the input matrix is wide enough, data from the previous row can be unloaded before we can reuse it in the next row.
+\citet{rivera2000tiling} suggest using tiling, including for higher dimension stencil operations. 
+However, we propose an alternative method: \emph{column grouping}.
+By splitting the workload into fixed width columns, we can keep as much data of the previous row(s) into the cache as needed.
 It would add an extra initial load when threads start working on new columns, but is negligible with sufficiently long columns.
 
-In this case the size of cache correlates to the footprint of the stencil operation running on two rows of the column.
+In this case, the amount of cache needed correlates to the footprint of the stencil operation running on two rows of the column.
 When working with multiple threads, an operation can start further ahead on the column.
 We can estimate the size of the cache $M_{cache}$ with the stencil height $s_h$ and width $s_w$, column width $c_w$, number of threads $t$ and element size $e$:
 \[
@@ -334,7 +363,7 @@ The number of loads for various column configurations is compared to the best an
 \subsubsection{Preliminary Simulation}
 \label{sec:stencil_sim}
 We analyze the stencil pattern on a simulator with a simple LRU cache with the parameters in table \ref{tab:sim_stencil_params}. 
-A time step consists out the calculation of a single element of the stencil in which we record the accessed addresses.
+A time step consists of the calculation of a single element of the stencil in which we record the accessed addresses.
 The state of each address at every time step is plot in a spatial-temporal diagram (fig. \ref{fig:st_stencil}) which can show us spatial and temporal locality.
 Spatial locality can be identified by \square{black} vertical regions where accessed addresses can share the same cache line.
 Temporal locality can be identified by \square{black} and \square{gray} horizontal regions where cached data stays in cache long enough to being reused. \square{red} regions are data that is brought into cache from memory, either due to being unloaded or being evicted earlier.
@@ -358,7 +387,7 @@ Temporal locality can be identified by \square{black} and \square{gray} horizont
     \label{tab:sim_stencil_params}
 \end{table}
 
-In the naive case we observe a large amount of cache misses (fig. \ref{fig:st_stencil_naive}).
+For the naive implementation, we observe a large amount of cache misses (fig. \ref{fig:st_stencil_naive}).
 This is because the cache is not large enough to allow for reuse when wrapping around to the next row of calculations.
 The proposed method solves by also ensuring temporal locality (fig \ref{fig:st_stencil_column}).
 The limited horizontal range from the columns can be observed in the zigzagging in the diagram.
@@ -464,10 +493,50 @@ There are, however, a matrix multiplication algorithms with a lower computation 
 The implementation for a scheduler for Strassen's algorithm is lower priority and may or may not be implemented, since Accelerate does not have an implementation of it.
 
 \subsection{Generate and Permute}
-
+The generate operation makes an array of a given shape and maps each index to a value (see listing \ref{lst:type_generate_permute}).
+Back permute is a more specific instance of this: the value of each index from the resulting array is derived from a given index mapping from a source array.
 The permutation primitive initializes an array with default values and then combines it with the input array according to a combination function and an index map.
 From a memory point of view we are interested in the predictable memory accesses which can be defined in terms of execution parameters per thread.
-We categorize accesses as following:
+However, with permute trying to optimize for caches may hurt performance as multiple threads may write to the same element using the combination function which needs to be synchronized with other threads.
+\begin{listing}[!ht]
+    \begin{minted}{haskell}
+generate :: (Shape sh, Elt a) 
+-- Shape of array:
+=> Exp sh 
+-- Function that generates values from indices:
+-> (Exp sh -> Exp a) 
+-- Resulting array:
+-> Acc (Array sh a) 
+
+backpermute :: (Shape sh, Shape sh', Elt a)	 
+-- Shape of the result array:
+=> Exp sh'	
+-- Index permutation function:
+-> (Exp sh' -> Exp sh)	
+-- Source array:
+-> Acc (Array sh a)	
+-- Resulting array:
+-> Acc (Array sh' a)
+
+permute :: (Shape sh, Shape sh', Elt a) 
+-- Combination function:
+=> (Exp a -> Exp a -> Exp a)	
+-- Array of default values (shape is also defined):
+-> Acc (Array sh' a)	
+-- Index permutation function:
+-> (Exp sh -> Exp sh')	
+-- Array of source values to be permuted:
+-> Acc (Array sh a)	
+-- Resulting array:
+-> Acc (Array sh' a)
+    \end{minted}
+    \caption{
+        The type signatures of \texttt{generate}, \texttt{backpermute} and \texttt{permute}.
+    }
+    \label{lst:type_generate_permute}
+\end{listing}
+
+To generalize the thread ordering method described in section \ref{sec:stencil_schedule}, we categorize memory accesses as following:
 \begin{itemize}
     \item \textbf{Horizontal} accesses that describe spatial locality. 
     While these can exploit cache lines the most, they may also cause inefficiencies by crossing cache line boundaries.
@@ -483,9 +552,7 @@ We therefore prioritize optimizing for vertical locality.
 To exploit vertical locality, data must be kept in cache long enough.
 For the column ordering described in section \ref{sec:stencil_schedule}, we can control how long data is stored in cache by increase or decrease $c_w$.
 Having a generic method to determine $c_w$ allows us to incorporate fused operators since we only care about the relative offset and range of each memory access and the input of fused operators are thread indices.
-\TODO{Incorporate citations}
-\citet{balen2020optimal}
-\citet{mcdonell2013optimising}
+
 
 \subsection{Scan and Fold}
 Scan primitives, also known as prefix sums, have many parallel algorithms.
