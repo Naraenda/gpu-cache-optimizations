@@ -48,26 +48,44 @@ With a smarter scheduler, programs can achieve better cache and memory utilizati
 We propose several specialized thread schedules to improve performance by leveraging the structure of memory accesses in the high level GPGPU framework Accelerate \cite{chakravarty2011accelerating}.
 
 \subsection{GPU Architecture}
+Since the GPU backend of Accelerate only works with CUDA capable devices (see section \ref{sec:accelerate}), we will mostly focus on the architecture of newer NVidia GPUs.
 Massive parallel workloads are executed on numerous cores clustered in streaming multiprocessors (SMs).
-The memory is structured in a multi-level hierarchy containing a L1 cache for each SM, a shared L2 cache for all SMs and multiple banks of DRAM \cite{nvidia2017volta,nvidia2020ampere}.
+The memory is structured in a multi-level hierarchy containing an L1 cache for each SM, a shared L2 cache for all SMs and multiple banks of DRAM \cite{nvidia2017volta,nvidia2020ampere}.
 
 Memory can become a significant bottleneck due to the large amount of threads running concurrently.
-Caches can alleviate this but is limited in size, and given a large enough problem can cause cache trashing -- the premature eviction of cache lines before any significant reuse \cite{dai2016model}.
+Caches can alleviate this but are limited in size, and given a large enough problem can cause cache trashing -- the premature eviction of data before any significant reuse \cite{dai2016model}.
+To improve efficiency of caches, caches asume spatial locality via cache lines.
+A cache line is the smallest unit of data that a cache can hold.
+For example, an L1 cache on a Turing GPU uses cache lines that hold 128 bytes of data.
+Therefore, fetching data from memory also brings extra nearby data with it.
 
-Data shared between threads through the cache can happen read-after-write (RAW) or read-after-read (RAR).
+Data shared between threads through the cache can happen in a read-after-write (RAW) or read-after-read (RAR) manner.
 RAW has data dependency among tasks, for example in scan operations.
 RAR has no data dependency and can be executed in any order \cite{tripathy2021paver}.
 
-The L1 cache in older Nvidia GPU architectures (Maxwell, Pascal) uses the least recently used (LRU) eviction policy, new architectures (Turing, Volta) a non-LRU eviction policy \cite{jia2019dissecting, jia2018dissecting,mei2016dissecting}.
-\citet{jia2019dissecting} has shown that in Turing and Volta GPUs, the P-chase benchmark presented by \citet{mei2016dissecting} fails to detect the full L1 cache.
-This is due to the new L1 eviction policy introduced with Volta, where cache lines can be assigned a priority \cite{jia2019dissecting,nvidia2021cudadocs}.
+The L1 cache in older Nvidia GPU architectures (Maxwell, Pascal) uses the least recently used (LRU) eviction policy.
+When caches become full, we need to remove data (a cache line) from the cache to allow newer data to be cached.
+An LRU eviction policy evicts data that is the least recently used.
+\citet{jia2019dissecting} have shown that in Turing and Volta GPUs, the P-chase benchmark that is used to detect the LRU eviction policy presented by \citet{mei2016dissecting} fails to complete over the full L1 cache.
+\citeauthor{jia2019dissecting} conclude that newer architectures (Turing, Volta) uses a non-LRU eviction policy \cite{jia2019dissecting, jia2018dissecting,mei2016dissecting}.
+When the L1 cache in Turing and Volta GPU saturates, 4 consecutive cache lines are chosen randomly to be evicted.
+This is in line with a new eviction policy mechanism introduced with Volta, where cache lines can be assigned a priority \cite{jia2019dissecting,nvidia2021cudadocs}.
+
+Modern Nvidia GPUs are able to handle various types cache operations and eviction hints.
+By default, loads are cached at all levels (L2, L1) with an LRU policy.
+This brings a problem with it: if data is writen to a cached value, we need to evict this cache line from all other L1 caches first, since that value is no longer up to date after our update.
+As an example, it is also possible to only cache on L2, bypassing L1.
+Another option is to hint cache streaming, where the loaded cache line will have an evict-first policy to prevent polution of the cache.
+Similar operations exist for writing data to memory.
+In both cases it is up to the compiler and programmer to exploit this for extra performance \cite{nvidia2021cudadocs}.
 
 When working with CUDA the programmer defines a kernel.
 This is normally done with CUDA C++, an extension on C++ programming language, but in our case Accelerate will handle the generation of kernels (section \ref{sec:accelerate}).
 The kernel instructs what a single thread most do, given certain runtime and constant variables.
 Executing a program spawns multiple threads, each with their own thread id and corresponding block id.
 These threads are grouped into cooperative thread arrays (CTA), sometimes also called a thread block.
-A CTA gets executed in SIMT in groups called warps which typically contain 32 threads.
+CTAs get assigned to SMs in round-robin.
+An SM executes an assigned CTA in a single instruction multiple thread (SIMT) fashion, groups called warps which typically contain 32 threads.
 There is a maximum number of threads that can fit a CTA, so we often need multiple \cite{nvidia2021cudadocs}.
 
 % Cache hitrate
@@ -81,7 +99,7 @@ The frontend handles general optimizations such as sharing recovery and array fu
 Further hardware specific optimization is handled on the various backends.
 There are two LLVM \cite{llvm} backends provided: one that targets multicore CPUs \texttt{accelerate-llvm-native} and one that targets Nvidia GPUs \texttt{accelerate-llvm-ptx}.
 In both backends we compile Accelerate code to LLVM IR.
-When we want to run Accelerate on the GPU, LLVM will handle the compilation from LLVM IR to PTX, the instructions set for Nvidia's CUDA programming environment\cite{mcdonell2015type, llvm, nvidia2021cudadocs}.
+When we want to run Accelerate on a GPU, LLVM will handle the compilation from LLVM IR to PTX, the instructions set for Nvidia's CUDA programming environment \cite{mcdonell2015type, llvm, nvidia2021cudadocs}.
 The GPU backend implements a series of skeletons which implement primitive operations such as stencils, generate, permute, and scan.
 These skeletons define how a program should be compiled and is the part where a custom thread scheduler can be implemented.
 Further customizations to the scheduler can be done on the executing side of the backend as it controls how kernels are launched.
@@ -107,20 +125,20 @@ Non-deterministic loads will generate more memory requests due to uncoalesced me
 \subsection{CTA Clustering}
 Because CTAs are assigned to SMs in a round-robin fashion, nearby CTAs may not be able to exploit the L1 cache as they can be assigned to different SMs.
 We call this sharing between CTAs inter-CTA locality.
-Not every program has inter-CTA locality, for example: incrementing every element by a fixed amount.
-Inter-CTA locality can be categorized into:
+Not every program has inter-CTA locality, for example: a program that increments every element of an array by a fixed amount.
+Inter-CTA locality opertunities and issues can be categorized \cite{li2017locality}:
 \begin{itemize}
-    \item Algorithm related locality present promising opportunities for inter-CTA reuse.
-    \item Cache-line related locality result from non-aligned memory accesses or coalesced.
+    \item Algorithm related locality presents promising opportunities for inter-CTA reuse.
+    \item Cache-line related locality resulting from non-aligned memory accesses or coalesced accesses.
     \item Locality stemming from irregular data structures (pointers) often happens by accident and is thus difficult to account for.
     \item Write related applications may suffer when multiple CTAs write to the same cache line causing an eviction in the L1 cache.
     \item Streaming applications are coalesced and aligned.
 \end{itemize}
-\citet{li2017locality} proposes a clustering algorithm for CTAs.
+\citeauthor{li2017locality} proposes a clustering algorithm for CTAs.
 For algorithmic locality, the partitioning is based on a dependency analysis on the array references.
 The CTAs are then remapped according to a set of patterns.
-These are executed normally or via an agent based system \cite{li2017locality}.
-\TODO{Relate to proposal}
+While we can pass the remapped CTAs to the GPU, the round-robin scheduler may still assign things unoptimally.
+Alternatively, an agent based approach may be more benificial: workers are fixed to an SM, so we can more finely control which CTA gets executed on which SM \cite{li2017locality}.
 
 \subsection{Locality Graph-Based Scheduling}
 \citeauthor{tripathy2021paver} presented a priority aware vertex scheduler (PAVER) for read-after-read programs which expands on the previous work \cite{tripathy2021paver}.
@@ -132,9 +150,9 @@ If an SM has no more work, it steals work from other SMs by taking from the tail
 
 \subsection{Stencil Computations}
 Stencil operations update an N-dimensional array according to a fixed pattern surrounding the updated element (fig. \ref{fig:stencil_access_pattern}).
-Accelerate allows stencils to be easily defined (listing \ref{lst:stencil_example}).
+Accelerate has stencils as primitive operations and allows these to be easily used (listing \ref{lst:stencil_example}).
 
-\begin{figure}
+\begin{figure}[!hb]
     \centering
     \begin{tikzpicture}[scale=0.25]
         \fill[gray!50] (2, 2) rectangle +(5, 5);
@@ -163,11 +181,12 @@ plus3x3 = stencil plus3x3s clamp
     \label{lst:stencil_example}
 \end{listing}
 
-Improving the performance of stencil computations have been researched extensively.
+Improving the performance of stencil computations has been studied extensively.
 \citet{kamil2006implicit} presented optimizations targeting temporal cache reuse across multiple stencil sweeps via time skewing.
+By blocking in the time axis, more data is available to be cached which can help us utilize the larger caches on newer hardware \cite{strzodka2011cache}.
+
 \citet{zhao2019exploiting} presented a vectorization approach and improvements regarding instruction cache hits.
 However, none of the presented optimizations try to tackle temporal locality within a stencil sweep.
-\TODO{Expand on this}
 
 \subsection{Matrix Computations}
 \label{sec:matrix_intro}
@@ -213,7 +232,7 @@ Optimizing cache performance for matrix multiplications has been researched exte
 Implementations either use a form of tiling, a divide and conquer strategy or different array structures to improve performance \cite{bader2006cache,frigo1999cache}.
 
 The lower bound of matrix multiplication is not $O(n^3)$.
-\citet{strassen1969gaussian}'s original algorithm and \citet{winograd1971multiplication}'s variation runs in $O(n^{2.81})$.
+\citeauthor{strassen1969gaussian}'s original algorithm \cite{strassen1969gaussian} and \citeauthor{winograd1971multiplication}'s variation \cite{strassen1969gaussian} runs in $O(n^{2.81})$.
 Note that the best bound is $\omega < 2.373$ for $O(n^\omega)$ \cite{alman2018limits}.
 \citeauthor{strassen1969gaussian}'s algorithm has also been implemented on the GPU by \citet{li2011strassen}.
 
@@ -224,7 +243,9 @@ Note that the best bound is $\omega < 2.373$ for $O(n^\omega)$ \cite{alman2018li
     \textbf{Research Question 1}
     \emph{What are the thread schedules for common structured GPGPU operations that result in the fastest execution?}
 \end{mdframed}
-Because Accelerate implements operations via skeletons, a lot of the structure of memory accesses can be inferred which could be used to generate more performant schedules.
+We want to know what thread schedule on the GPU is optimal for structured operations such as stencils and matrix multiplications.
+Ideally such a schedule is generalizeable, and we can derive such a schedule from a program's access pattern.
+For this study, we will mainly look at improving performance on Accelerate as it uses skeleton code to generate the code for various operators.
 We are interested in the theoretical bounds of amounts of cache loads for such a schedule and its comparison to the naive schedule.
 Furthermore, the generation and execution of schedules can result in extra computation time, so we must also check with real world performance metrics.
 
@@ -233,8 +254,8 @@ Furthermore, the generation and execution of schedules can result in extra compu
     \textbf{Research Question 2}
     \emph{Is specialized structured scheduling equally or more performant than locality graph-based scheduling for structured GPGPU operations?}
 \end{mdframed}
-The PAVER method by \citet{tripathy2021paver} is the current state of the art regarding GPU scheduling.
-We would like to see how well the proposed method compares to what is achievable.
+The PAVER method by \citet{tripathy2021paver} is the current state of the art regarding GPU scheduling as it can adapt to various problems similarly to the proposed method.
+Since we are tackling a smaller set of problems, namely structured operations, more specialized tweaks can be applied and our proposed method may perform better.
 
 \section{Approach}
 The built-in GPU scheduler allocates threads and CTAs to streaming multiprocessors.
@@ -255,7 +276,7 @@ It would add an extra initial load when threads start working on new columns, bu
 
 In this case, the amount of cache needed correlates to the footprint of the stencil operation running on two rows of the column.
 When working with multiple threads, an operation can start further ahead on the column.
-We can estimate the size of the cache $M_{cache}$ with the stencil height $s_h$ and width $s_w$, column width $c_w$, number of threads $t$ and element size $e$:
+We can estimate the desired size of the cache $M_{cache}$ with the stencil height $s_h$ and width $s_w$, column width $c_w$, number of threads $t$ and element size $e$:
 \[
     M_{cache} = e (c_w + s_w) \left(s_h + \ceil{\frac{t}{c_w}}\right) 
 \]
@@ -449,13 +470,13 @@ We run a similar simulation as in section \ref{sec:stencil_sim} with an adjusted
 \end{table}
 
 The results are compiled into spatial temporal diagram (figure \ref{fig:st_matrix}).
-With the original ordering, accessing the columns for each resulting element can lots of cache misses (figure \ref{fig:st_matrix_naive}).
+With the original ordering, accessing the columns for each resulting element can incur lots of cache misses (figure \ref{fig:st_matrix_naive}).
 The proposed schedule improves reuse by ensuring that columns in the same cache lines are reused as much as possible (figure \ref{fig:st_matrix_column}).
 As a result we incur more cache misses on row accesses, but this is mitigated by the fact that these accesses are more efficient since more useful data is contained per cache line.
 
 \begin{figure}
     \centering
-    \subfloat[The spatial temporal diagram of a matrix multiplication with linear ordering.]{
+    \subfloat[The spatial temporal diagram of matrix multiplication with linear ordering.]{
         \begin{tikzpicture}[spy using outlines={rectangle, magnification=4,connect spies}]
             \node (image) at (0,0) {\includegraphics[width=0.25\textwidth]{st_diagrams/matrix_linear.png}};
             \draw [->] (image.south west) -- ++(2,0) node[right]{\footnotesize\textit{Time}};
@@ -489,15 +510,15 @@ As a result we incur more cache misses on row accesses, but this is mitigated by
 \end{figure}
 
 There are, however, a matrix multiplication algorithms with a lower computation complexity. 
-\citet{li2011strassen} has shown that it is possible to run Strassen's algorithm (discussed in section \ref{sec:matrix_intro}) on the GPU.
+\citet{li2011strassen} has shown that it is possible to run Strassen's algorithm (see section \ref{sec:matrix_intro}) on the GPU.
 The implementation for a scheduler for Strassen's algorithm is lower priority and may or may not be implemented, since Accelerate does not have an implementation of it.
 
 \subsection{Generate and Permute}
 The generate operation makes an array of a given shape and maps each index to a value (see listing \ref{lst:type_generate_permute}).
-Back permute is a more specific instance of this: the value of each index from the resulting array is derived from a given index mapping from a source array.
+Backwards permutation is a more specific instance of this: the value of each index from the resulting array is derived from a given index mapping from a source array.
 The permutation primitive initializes an array with default values and then combines it with the input array according to a combination function and an index map.
 From a memory point of view we are interested in the predictable memory accesses which can be defined in terms of execution parameters per thread.
-However, with permute trying to optimize for caches may hurt performance as multiple threads may write to the same element using the combination function which needs to be synchronized with other threads.
+However, attempting to optimize for read performance may hurt performance when multiple threads need to write to the same element using the combination function which needs to be synchronized with other threads.
 \begin{listing}[!ht]
     \begin{minted}{haskell}
 generate :: (Shape sh, Elt a) 
