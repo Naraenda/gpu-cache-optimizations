@@ -1,0 +1,25 @@
+Graphics Processing Units (GPUs) are specialized hardware that can manipulate large amounts of data in a highly parallel manner.
+The hardware's main purpose is processing graphical data, however modern use of GPUs is in the form of general-pupose computing on the GPU (GPGPU) where we exploit the GPUs many cores to run computations normally run on CPUs in parallel.
+
+This high performance GPU computing has become very accessible via high level frameworks, which provide a limited set of operators, such as stencil, permute, fold, scan, which can manipulate data on a GPU \cite{chakravarty2011accelerating}.
+However, in most cases the compiled assembly has inefficient memory accesses with lower cache hit rates and uncoalesced accesses than manually tweaked code.
+Threads can be scheduled in such a way to minimize these inefficiencies.
+In such cases, a smarter scheduler can achieve better cache and memory utilization \cite{nugteren2014study}.
+We propose a simple schedule to improve performance by leveraging the structure of memory accesses in the high level GPGPU framework Accelerate \cite{chakravarty2011accelerating}.
+
+\section{Motivation}
+
+\section{Contributions}
+This thesis shows that the cache with tiled implementations for stencil and matrix multiplication can be improved by rescheduling via index mapping.
+While the main focus lies in improving the performance on GPU, the techniques presented can also be applied on a CPU.
+
+\vspace{1em}
+The main contributions of this thesis are:
+\begin{itemize}
+    \item An analysis for the theoretical cache utilization and efficiency of both linear and multithreaded (GPU) execution for naive and tiled implementations of stencil and matrix multiplication operations.
+    \item A simple implementeable schedule for stencil and matrix multiplication operations that better utilize the cache, which results in equal or better performance than the naive and tiled implementation.
+    \item An analysis for the theoretical cache utilization and efficiency of a column-based scheduler.
+\end{itemize}
+
+\section{Outline}
+\TODO{Chapter x introduces yada, yada}
