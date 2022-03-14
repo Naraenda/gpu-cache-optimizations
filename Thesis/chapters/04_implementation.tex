@@ -4,6 +4,8 @@ While tiling itself is a well-known optimization technique, we most consider the
 
 \TODO{\dots}
 
+\section{Theory}
+
 In a sense, grouping columns is similar to striding clusters of data, except in the case when a row of work can't be perfectly strided.
 When the width of a multidimensional array is not a multiple of the stride, the loads will not align column wise (\TODO{figure}).
 To work around this, in the column approach we allow the last column to be narrower.
@@ -11,7 +13,7 @@ To work around this, in the column approach we allow the last column to be narro
 \begin{figure}[!hb]
     \centering
     
-    \subfloat[Striding.]{
+    \subfloat[Striding does not work well when the width of the task is a non-multiple of the striding factor.]{
         \centering
         \makebox[0.4\columnwidth][c]{
             \begin{tikzpicture}[scale=0.25, decoration = {
@@ -20,19 +22,50 @@ To work around this, in the column approach we allow the last column to be narro
                 \fill[gray]    (0, 3) rectangle +(4, 1);
                 \fill[gray!50] (4, 3) rectangle +(4, 1);
                 \fill[gray]    (8, 3) rectangle +(3, 1);
+
+                \fill[gray]    (0, 2) rectangle +(1, 1);
+                \fill[gray!50] (1, 2) rectangle +(4, 1);
+                \fill[gray]    (5, 2) rectangle +(4, 1);
+                \fill[gray!50] (9, 2) rectangle +(2, 1);
+
+                \fill[gray!50] (0, 1) rectangle +(2, 1);
+                \fill[gray]    (2, 1) rectangle +(4, 1);
+                \fill[gray!50] (6, 1) rectangle +(4, 1);
+                \fill[gray]    (10, 1) rectangle +(1, 1);
+
+                \fill[gray]    (0, 0) rectangle +(3, 1);
+                \fill[gray!50] (3, 0) rectangle +(4, 1);
+                \fill[gray]    (7, 0) rectangle +(4, 1);
+
                 \draw[step=1,gray!25] (0, 0) grid (11, 4);
             \end{tikzpicture}
         }
         \label{fig:striding_misalignment}
     }
     \qquad
-    \subfloat[Column]{
+    \subfloat[Allowing the last column to be flexible allows columns of thread groups to stay cohesive.]{
         \centering
         \makebox[0.4\columnwidth][c]{
             \begin{tikzpicture}[scale=0.25, decoration = {
                 markings, mark = between positions 0.3cm and 0.95 step 0.25cm with {\arrow{stealth}}
             }]
-                \draw[step=1,gray!25] (0, 0) grid (16, 8);
+                \fill[gray]    (0, 3) rectangle +(4, 1);
+                \fill[gray!50] (4, 3) rectangle +(4, 1);
+                \fill[gray]    (8, 3) rectangle +(3, 1);
+
+                \fill[gray!50] (0, 2) rectangle +(4, 1);
+                \fill[gray]    (4, 2) rectangle +(4, 1);
+                \fill[gray!50] (8, 2) rectangle +(3, 1);
+
+                \fill[gray]    (0, 1) rectangle +(4, 1);
+                \fill[gray!50] (4, 1) rectangle +(4, 1);
+                \fill[gray]    (8, 1) rectangle +(3, 1);
+
+                \fill[gray!50] (0, 0) rectangle +(4, 1);
+                \fill[gray]    (4, 0) rectangle +(4, 1);
+                \fill[gray!50] (8, 0) rectangle +(3, 1);
+
+                \draw[step=1,gray!25] (0, 0) grid (11, 4);
             \end{tikzpicture}
         }
         \label{fig:column_alignment}
@@ -55,22 +88,138 @@ We can construct the index mapping $i \mapsto j$. First, we calculate the offset
         \\
         w & \text{otherwise}
     \end{cases}
-    \\ \intertext{And take $i'$ as the index within a column.}
+    \\ \intertext{And take $i'$ as the index within a column}
     i' &= i \bmod I_h w'
+    \\ \intertext{Calculate the position $(x, y)$ within the column}
+    x & = i' \bmod w'
+    \\ 
+    y & = \floor{\frac{i'}{w'}}
     \\ \intertext{So that we can calculate $j$}
-    j  &= (i' \bmod w')' + \floor{\frac{i'}{w'}} I_w + o
+    \label{eq:column_mapping_to_j}
+    j  &= x + y I_w + o
 \end{align}
 
 \TODO{should i add a figure showing the relation between the equation and the column pattern?}
 
 \TODO{What are the effects of GPU warps (32 threads) with this schedule?}
 
-\section{Zigzagging variation}
+On GPUs threads are batched in batches of 32 threads.
+Therefore, increasing spatial locality between neighbouring threads can improve performance.
+
+\subsection{Zigzagging variation}
+
+A solution to increase thread locality within wraps in non-multiple widths of 32 is to zizzag on every other row.
+We modify equation \ref{eq:column_mapping_to_j}
+\begin{equation}
+    j = \left(\begin{cases}
+        x & y \text{ is uneven}
+        \\
+        w' - x & y \text{ is even}
+    \end{cases}\right)  + y I_w + o
+\end{equation}
+
 \TODO{If we make columns fit for L2 cache, zigzagging may improve locality for lower level cache (L1) when columns sizes aren't a nice power of 2 (or)}
+
+\subsection{Higher dimensions}
 
 \section{Implementation in Accelerate}
 
+
 \TODO{AAAAAAAAAAAA}
+
+
+\begin{listing}[!ht]
+    \begin{minted}{haskell}    
+type ThreadMapping sh e arch 
+    =  ShapeR sh 
+    -> Operands sh 
+    -> Operands Int 
+    -> CodeGen arch (Operands Int)
+    \end{minted}
+    \label{lst:threadmapping_type}
+\end{listing}
+
+\begin{listing}
+    \begin{minted}{haskell}
+column :: Operands Int -> ThreadMapping sh e arch
+column column_width shr sh index = do
+    -- input sizes
+    input_width  <- widthOp shr sh
+    input_size   <- sizeOp  shr sh
+    input_height <- input_size |//| input_width
+    
+    column_size  <- column_width |*|  input_height
+    column_count <- ((input_size |+| column_size) |-| (1::Int)) |//| column_size
+
+    column_index      <- index |//| column_size
+    column_last_index <- column_count |-| (1::Int)
+    column_offset     <- column_index |*| column_width
+
+    index' <- index |%| column_size
+
+    column_current_width <- ifThenElse (
+        TupRsingle $ SingleScalarType $ NumSingleType (numType @Int), 
+        column_index |==| column_last_index
+      ) ( do
+        input_width |-| (column_last_index |*| column_width)
+      ) ( do
+        return column_width
+      )
+    
+    x_in_column <- index' |%|  column_current_width
+    y_in_column <- index' |//| column_current_width
+    result      <- x_in_column |+| (y_in_column |*| input_width) |+| column_offset
+
+    return result
+    \end{minted}
+    \caption{
+        \TODO{agaljhgal}
+    }
+    \label{lst:column_mapping}
+\end{listing}
+
+\begin{listing}
+    \begin{minted}{haskell}
+precomp_column :: Operands Int 
+               -> ShapeR sh 
+               -> Operands sh 
+               -> CodeGen arch (Operands Int -> CodeGen arch (Operands Int))
+precomp_column column_width shr sh = do
+    -- input sizes
+    input_width  <- widthOp shr sh
+    input_size   <- sizeOp  shr sh
+    input_height <- input_size |//| input_width
+    
+    column_size  <- column_width |*|  input_height
+    column_count <- ((input_size |+| column_size) |-| (1::Int)) |//| column_size
+
+    column_last_index <- column_count |-| (1::Int)
+
+    return \index -> do
+        column_index  <- index |//| column_size
+        column_offset <- column_index |*| column_width
+        index' <- index |%| column_size
+
+        column_current_width <- ifThenElse (
+            TupRsingle $ SingleScalarType $ NumSingleType (numType @Int), 
+            column_index |==| column_last_index
+        ) ( do
+            input_width |-| (column_last_index |*| column_width)
+        ) ( do
+            return column_width
+        )
+        
+        x_in_column <- index' |%|  column_current_width
+        y_in_column <- index' |//| column_current_width
+        result      <- x_in_column |+| (y_in_column |*| input_width) |+| column_offset
+
+        return result
+    \end{minted}
+    \caption{
+        The column mapping from listing \ref{lst:column_mapping} with precomputing the fixed parameters.
+    }
+    \label{lst:column_mapping_precompute}
+\end{listing}
 
 \section{Stencil Operation}
 
@@ -135,7 +284,7 @@ In GPUs this translates to less cohesive threads as threadblocks get assigned in
     }
     \label{fig:}
     \qquad
-    \subfloat[Grouping by column and row (tiling) also incurs a heavy load when starting a new row, and due to having more rows also has more column starts.]{
+    \subfloat[Tiling also incurs a heavy load when starting a new row of tiles, and due to having more rows also has more column starts.]{
         \centering
         \makebox[0.4\columnwidth][c]{
             \begin{tikzpicture}[scale=0.25, decoration = {
@@ -188,7 +337,7 @@ In GPUs this translates to less cohesive threads as threadblocks get assigned in
         \fsquare{red} Memory required by the next task.
         \fsquare{black} Tasks that still have their memory in cache.
         \fsquare{gray!50} Memory in cache.
-        \fsquare{gray} Previous and upcoming tasks.
+        \fsquare{gray!15} Previous and upcoming tasks.
     }
     \label{fig:stencil_column_vs_tiling_pattern}
 \end{figure}

@@ -1,0 +1,7 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{k+kr}{type} \PYG{k+kt}{ThreadMapping} \PYG{n}{sh} \PYG{n}{e} \PYG{n}{arch}
+    \PYG{o+ow}{=}  \PYG{k+kt}{ShapeR} \PYG{n}{sh}
+    \PYG{o+ow}{\PYGZhy{}\PYGZgt{}} \PYG{k+kt}{Operands} \PYG{n}{sh}
+    \PYG{o+ow}{\PYGZhy{}\PYGZgt{}} \PYG{k+kt}{Operands} \PYG{k+kt}{Int}
+    \PYG{o+ow}{\PYGZhy{}\PYGZgt{}} \PYG{k+kt}{CodeGen} \PYG{n}{arch} \PYG{p}{(}\PYG{k+kt}{Operands} \PYG{k+kt}{Int}\PYG{p}{)}
+\end{Verbatim}

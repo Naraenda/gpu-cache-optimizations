@@ -1,34 +1,36 @@
-\contentsline {chapter}{\numberline {1}Introduction}{3}{}%
-\contentsline {section}{\numberline {1.1}Motivation}{3}{}%
-\contentsline {section}{\numberline {1.2}Contributions}{3}{}%
-\contentsline {section}{\numberline {1.3}Outline}{3}{}%
-\contentsline {chapter}{\numberline {2}Background}{4}{}%
-\contentsline {section}{\numberline {2.1}GPU Architecture}{4}{}%
-\contentsline {subsection}{\numberline {2.1.1}Hardware}{4}{}%
-\contentsline {subsection}{\numberline {2.1.2}Software}{4}{}%
-\contentsline {subsection}{\numberline {2.1.3}GPU Caches}{4}{}%
-\contentsline {subsection}{\numberline {2.1.4}Performance of Access Patterns}{5}{}%
-\contentsline {section}{\numberline {2.2}CPU vs GPU based multi-threading}{5}{}%
-\contentsline {section}{\numberline {2.3}Accelerate}{5}{}%
-\contentsline {section}{\numberline {2.4}Commonly Applicable Cache Improvements}{6}{}%
-\contentsline {subsection}{\numberline {2.4.1}Optimizations of Blocked Algorithms}{6}{}%
-\contentsline {subsection}{\numberline {2.4.2}CTA Clustering}{6}{}%
-\contentsline {subsection}{\numberline {2.4.3}PAVER}{6}{}%
-\contentsline {chapter}{\numberline {3}Analysis of Existing Approaches}{7}{}%
-\contentsline {section}{\numberline {3.1}Spatial Temporal Analysis}{7}{}%
-\contentsline {section}{\numberline {3.2}Stencil Operations}{7}{}%
-\contentsline {subsection}{\numberline {3.2.1}Naive}{7}{}%
-\contentsline {subsection}{\numberline {3.2.2}Tiling}{9}{}%
-\contentsline {section}{\numberline {3.3}Matrix Multiplication}{9}{}%
-\contentsline {subsection}{\numberline {3.3.1}Naive}{9}{}%
-\contentsline {subsection}{\numberline {3.3.2}Tiling}{9}{}%
-\contentsline {chapter}{\numberline {4}Column Based Iteration}{11}{}%
-\contentsline {section}{\numberline {4.1}Zigzagging variation}{12}{}%
-\contentsline {section}{\numberline {4.2}Implementation in Accelerate}{12}{}%
-\contentsline {section}{\numberline {4.3}Stencil Operation}{12}{}%
-\contentsline {section}{\numberline {4.4}Matrix Multiplication}{13}{}%
-\contentsline {chapter}{\numberline {5}Results}{14}{}%
-\contentsline {section}{\numberline {5.1}Execution Times}{14}{}%
-\contentsline {section}{\numberline {5.2}Cache Hitrate}{14}{}%
-\contentsline {section}{\numberline {5.3}Hardware Utilization}{14}{}%
-\contentsline {chapter}{\numberline {6}Conclusion}{15}{}%
+\contentsline {chapter}{\numberline {1}Introduction}{4}{}%
+\contentsline {section}{\numberline {1.1}Motivation}{4}{}%
+\contentsline {section}{\numberline {1.2}Contributions}{4}{}%
+\contentsline {section}{\numberline {1.3}Outline}{4}{}%
+\contentsline {chapter}{\numberline {2}Background}{5}{}%
+\contentsline {section}{\numberline {2.1}GPU Architecture}{5}{}%
+\contentsline {subsection}{\numberline {2.1.1}Hardware}{5}{}%
+\contentsline {subsection}{\numberline {2.1.2}Software}{5}{}%
+\contentsline {subsection}{\numberline {2.1.3}GPU Caches}{5}{}%
+\contentsline {subsection}{\numberline {2.1.4}Performance of Access Patterns}{6}{}%
+\contentsline {section}{\numberline {2.2}CPU vs GPU based multi-threading}{6}{}%
+\contentsline {section}{\numberline {2.3}Accelerate}{6}{}%
+\contentsline {section}{\numberline {2.4}Commonly Applicable Cache Improvements}{7}{}%
+\contentsline {subsection}{\numberline {2.4.1}Optimizations of Blocked Algorithms}{7}{}%
+\contentsline {subsection}{\numberline {2.4.2}CTA Clustering}{7}{}%
+\contentsline {subsection}{\numberline {2.4.3}PAVER}{7}{}%
+\contentsline {chapter}{\numberline {3}Analysis of Existing Approaches}{8}{}%
+\contentsline {section}{\numberline {3.1}Spatial Temporal Analysis}{8}{}%
+\contentsline {section}{\numberline {3.2}Stencil Operations}{8}{}%
+\contentsline {subsection}{\numberline {3.2.1}Naive}{8}{}%
+\contentsline {subsection}{\numberline {3.2.2}Tiling}{10}{}%
+\contentsline {section}{\numberline {3.3}Matrix Multiplication}{10}{}%
+\contentsline {subsection}{\numberline {3.3.1}Naive}{10}{}%
+\contentsline {subsection}{\numberline {3.3.2}Tiling}{10}{}%
+\contentsline {chapter}{\numberline {4}Column Based Iteration}{12}{}%
+\contentsline {section}{\numberline {4.1}Theory}{12}{}%
+\contentsline {subsection}{\numberline {4.1.1}Zigzagging variation}{13}{}%
+\contentsline {subsection}{\numberline {4.1.2}Higher dimensions}{13}{}%
+\contentsline {section}{\numberline {4.2}Implementation in Accelerate}{13}{}%
+\contentsline {section}{\numberline {4.3}Stencil Operation}{13}{}%
+\contentsline {section}{\numberline {4.4}Matrix Multiplication}{16}{}%
+\contentsline {chapter}{\numberline {5}Results}{17}{}%
+\contentsline {section}{\numberline {5.1}Execution Times}{17}{}%
+\contentsline {section}{\numberline {5.2}Cache Hitrate}{17}{}%
+\contentsline {section}{\numberline {5.3}Hardware Utilization}{17}{}%
+\contentsline {chapter}{\numberline {6}Conclusion}{18}{}%
