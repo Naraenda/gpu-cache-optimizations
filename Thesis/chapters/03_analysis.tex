@@ -1,4 +1,8 @@
 
+\section{Assumptions}
+\TODO{Ass. 1 LRU (least recently used) eviction}
+\TODO{Ass. 2 Assume best case associativity, no conflicts}
+
 \section{Spatial Temporal Analysis}
 The memory accesses of algorithms can be plotted in a spatial-temporal diagram, with the address space on the spatial axis and order of access on the temporal axis.
 Since only the thread order can be manipulated, elements on the temporal can be condensced by grouping them by thread.
@@ -215,6 +219,19 @@ We can define the number cache lines fetched in terms of the available cache by 
 \section{Matrix Multiplication}
 
 \subsection{Naive}
+
+Given the output matrix of size $I_w \times I_h$ with input matrices of size $I_w \times D$ and $D \times I_h$, we can start reusing in the naive case only if
+
+\begin{equation}
+    \label{eq:mm_naive_minimum_cache}
+    M_l > \ceil{\frac{D}{L}} + D
+\end{equation}
+
+If equation \ref{eq:mm_naive_minimum_cache} is not satisfied then there is no reuse of data possible, and the amount of cache line fetches is
+
+\begin{equation}
+    F = \left( \ceil{\frac{D}{L}} + D \right) I_w I_h
+\end{equation}
 
 \TODO{Split figure \ref{fig:st_matrix} up into their parts for better flow}
 % fig:st_matrix

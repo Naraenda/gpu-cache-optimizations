@@ -32,6 +32,39 @@ With the volta architecture, independent thread scheduling allows full concurenc
 
 \TODO{Figure visualizing the whole thing because text is confusing... probably}
 
+% random sketch
+\begin{figure}[!hb]
+    \centering
+    \begin{tikzpicture}
+        \pic at (0, 0) {thread};
+        \pic at (2, 0) {threadblock};
+        \pic at (5, 0) {warp};
+    \end{tikzpicture}
+    \caption{
+        \TODO{remove this, only used to debug tikz pic codes}
+    }
+\end{figure}
+
+
+\begin{figure}[!hb]
+    \centering
+    \begin{tikzpicture}
+        \node at (1, 1.5) {threadblock size};
+        \draw[decorate, thick, decoration={brace}] (0,1.1) --  (2,1.1);
+        
+
+        \node [rotate=90] at (-0.5, -1) {grid size};
+        \draw[decorate, thick, decoration={brace}] (-0.1,-3.2) --  (-0.1,1);
+
+        \pic at (0, 0) {threadblock};
+        \pic at (0, -1.1) {threadblock};
+        \pic at (0, -3.2) {threadblock};
+    \end{tikzpicture}
+    \caption{
+        \TODO{host side workload assignment}
+    }
+\end{figure}
+
 \subsection{GPU Caches}
 \label{sec:cache_gpu}
 To the programmer, the memory hierarchy is very simplified: there is the compute unit and the memory.

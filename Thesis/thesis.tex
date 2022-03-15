@@ -5,10 +5,14 @@
 \usepackage{etoolbox}
 \usepackage{subfig}
 \usepackage{tikz}
-    \usetikzlibrary{colorbrewer}
-    \usetikzlibrary{patterns}
-    \usetikzlibrary{spy}
-    \usetikzlibrary{ decorations.markings}
+\usetikzlibrary{
+    calligraphy,
+    colorbrewer,
+    decorations.markings,
+    decorations.pathreplacing,
+    patterns,
+    spy
+    }
 \usepackage{float}
 \usepackage[framemethod=default]{mdframed}
 \usepackage[a4paper, margin=1in]{geometry}
@@ -34,6 +38,30 @@
 \newcommand{\floor}[1]{\left\lfloor #1 \right\rfloor}
 \newcommand{\ceil}[1]{\left\lceil #1 \right\rceil}
 \newrobustcmd*{\fsquare}[1]{\tikz{\filldraw[draw=#1,fill=#1] (0,0) rectangle (0.22cm,0.22cm);}}
+
+\tikzset{
+    thread/.pic={
+        \draw[->,decorate, decoration={snake}] (0, 0.9) -- +(0, -0.8);
+    }
+}
+
+\tikzset{
+    threadblock/.pic={
+        \draw (0, 0) rectangle +(2, 1);
+        \foreach \x in {1,2,3,8,9,10} {
+            \pic at ({\x / 5.5}, 0) {thread};
+        }
+        \node at (1, 0.5) [scale=0.75] {\dots};
+    }
+}
+
+\tikzset{
+    warp/.pic={
+        \draw (0, 0) rectangle +(1, 1);
+        \pic at (0.2, 0) {thread};
+        \node at (0.6, 0.5) {$\times 32$};
+    }
+}
 
 \title{Improving Performance in Structured GPGPU Workloads via Specialized Thread Schedules}
 \author{Naraenda Prasetya}
