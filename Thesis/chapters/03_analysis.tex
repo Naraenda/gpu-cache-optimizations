@@ -13,8 +13,9 @@ Additionally, a cache simulation can annotate this diagram with the cache level 
 \section{Stencil Operations}
 
 Stencil operation produces an N-dimensional array from a same sized input.
-For each element it reads a fixed sized neighborhood and writes a single element.
-Stencils are used for image operations (edge detection, filters, noise reduction), but can also find their use in other fields such as solving partial differentiation\cite{roth1997compilingstencils} and cellular automata.
+It consists of $I_w \times I_h$ tasks with $I_w$ being the first dimension of the input and $I_h$ being the product over the other dimensions.
+For each element it reads a fixed sized $S_w \times S_h$ neighborhood and writes a single element.
+Stencils are used for image operations (edge detection, filters, noise reduction), but can also find their use in other fields such as approximating partial differentiation\cite{roth1997compilingstencils} and cellular automata.
 
 \subsection{Naive}
 \label{sec:stencil_naive}
@@ -102,8 +103,7 @@ While the naive implementation of stencil operations works well enough when enou
     \label{fig:stencil_naive_loading_pattern}
 \end{figure}
 
-The minimum amount of cachelines cached $M_l$, and therefore needed, of cache line size of $L$ elements to stay in the ideal case is correlated by the stencil size and width of the input array:
-
+The lower bound of cache in amount of cache lines needed $M_l$ is bounded by the total horizontal footprint $I_w + S_w$ in amount of cache lines $L$, multiplied by the stencil height $S_h$
 \TODO{Maths}
 
 \begin{equation}
@@ -112,7 +112,7 @@ The minimum amount of cachelines cached $M_l$, and therefore needed, of cache li
 
 While in most cases \TODO{examples} this enough to fully exploit L2 caches, this can be unoptimal in regard to the L1 cache.
 \TODO{Example}
-The amount of cache lines needed to be feteched from memory $F$ is bound by the worse case (eq. \ref{eq:stencil_naive_optimal_memory} is not satisfied) where we consistently evict data from cache before we can reuse:
+The amount of cache lines needed to be fetched from memory $F$ is bound by the worse case (eq. \ref{eq:stencil_naive_optimal_memory} is not satisfied) where we consistently evict data from cache before we can reuse:
 
 \[
     F \leq \ceil{\frac{I_w + S_w}{L}} I_h S_h
@@ -132,7 +132,7 @@ Therefore, only when multiple warps are executed on the same SM, divergence in a
 A single warp of 32 threads uses $\ceil{\frac{32 + S_w}{l}} S_h$ cache lines when the threads cover a single rows. 
 When the warp is split between 2 rows, the cache needs to be slightly bigger: $\ceil{\frac{32 + 2 S_w}{l}} S_h$.
 
-Ideally, the whole input array would fit on the cache, but a sufficiently large input (i.e. a $2048\times2048$ 32-bit floating point array uses 16 MiB) will not fit on the L2 caches of modern GPUs ($\approx6$MiB of L2 data cache, Volta V100) and cache misses are unavoidable.
+Ideally, the whole input array would fit on the cache, but a sufficiently large input (e.g. a $2048\times2048$ 32-bit floating point array uses 16 MiB) will not fit on the L2 caches of modern GPUs ($\approx6$MiB of L2 data cache, Volta V100) and cache misses are unavoidable.
 Even if data would fit on the L2 cache, there would still be potential cache misses at the L1 cache (128 KiB, Volta V100).
 
 \TODO{More figures like in fig. \ref{fig:stencil_naive_loading_pattern}, but for GPU/multithreading}
@@ -194,7 +194,7 @@ The largest possible tiling size $t$ is derived by inverting equation \ref{eq:st
     t \leq \frac{L M_l}{S_h} - S_w
 \end{equation}
 
-Since equation \ref{eq:stencil_tiling_memory} can always be satisfied by adjusting $t$, we can have a lower upper bound on the amount of cache line fetches $F$:
+In practise, equation \ref{eq:stencil_tiling_memory} can be satisfied by adjusting $t$, we can have a lower upper bound on the amount of cache line fetches $F$:
 
 \begin{equation}
     F \leq \ceil{\frac{I_w}{t}} \ceil{\frac{t + S_w}{L}} \ceil{\frac{I_h}{t}} (t + S_h)

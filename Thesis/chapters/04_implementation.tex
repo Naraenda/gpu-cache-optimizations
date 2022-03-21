@@ -227,7 +227,7 @@ The naive stencil operations had problems of chasing the cache on sufficiently l
 Consider what the tiling implies: we split the work on all axis, to improve locality.
 However, all tiling except horizontal is unnecessary \TODO{bold claim, needs support} and may cause even more discontunuity in favourable access pattern.
 
-Let us first consider the single threaded case of column based itteration: by controlling the column width we can force the ideal scenario of the naive stencil implementation (figure \ref{fig:stencil_naive_loading_pattern_ideal}) to occur, similarly to tiling.
+Let us first consider the single threaded case of column based iteration: by controlling the column width we can force the ideal scenario of the naive stencil implementation (figure \ref{fig:stencil_naive_loading_pattern_ideal}) to occur, similarly to tiling.
 The column based approach is similar to tiling, but also allows the ideal memory access pattern to continue accross tiles vertically.
 In GPUs this translates to less cohesive threads as threadblocks get assigned in a round-robin fashion to SMs, eliminating posibilities of L1 cache reuse.
 
@@ -346,7 +346,7 @@ In GPUs this translates to less cohesive threads as threadblocks get assigned in
 
 \vspace{4cm}
 
-The size of the cache needed $M_{size}$ can be approximated given the unit byte size $u$, column width $c$, stencil width $s_{w}$ and height $s_{h}$, and the number of active threads $t$. The required memory is independent of the size of the input data.
+The size of the cache needed $M_{size}$ can be approximated given the units per cache line $L$, column width $c$, stencil width $s_{w}$ and height $s_{h}$, and the number of active threads $t$. The required memory is independent of the size of the input data.
 
 \[
     M_{size} = u \left(c + s_w\right) \left(s_h + \ceil{\frac{t}{c}}\right)

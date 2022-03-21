@@ -14,6 +14,17 @@ The main point of interest are streaming multiprocessors (SMs) in the TPCs.
 Each SMs has its own instruction scheduler and various execution pipelines.
 \citeauthor{jia2019dissecting} suggests that a threadblock should contain at least 128 threads due to SMs on Turing, Volta, and Ampere being split into four processing blocks \cite{jia2019dissecting,nvidia2017volta,nvidia2018turing,nvidia2020ampere}.
 
+\TODO{Link text with sketch}
+
+\begin{figure}[!hb]
+    \centering
+    \includegraphics[width=8cm]{sketches/ampere_arch.png}
+    \caption{
+        Ampere sketch.
+    }
+\end{figure}
+
+\TODO{Define + summerize architectures}
 \TODO{More specific + figure}
 
 \subsection{Software}
@@ -78,7 +89,7 @@ For example, an L1 cache on a Turing GPU uses cache lines that hold 128 bytes of
 Therefore, fetching data from memory also brings extra nearby data with it.
 
 Data shared between threads through the cache can happen in a read-after-write (RAW) or read-after-read (RAR) manner.
-RAW has data dependency among tasks, for example in scan operations.
+RAW has data dependency between tasks, for example in scan operations.
 RAR has no data dependency and can be executed in any order \cite{tripathy2021paver}.
 
 The L1 cache in older Nvidia GPU architectures (Maxwell, Pascal) uses the least recently used (LRU) eviction policy.
