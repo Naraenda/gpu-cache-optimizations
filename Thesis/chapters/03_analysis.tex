@@ -16,11 +16,98 @@ Stencil operation produces an N-dimensional array from a same sized input.
 It consists of $I_w \times I_h$ tasks with $I_w$ being the first dimension of the input and $I_h$ being the product over the other dimensions.
 For each element it reads a fixed sized $S_w \times S_h$ neighborhood and writes a single element.
 Stencils are used for image operations (edge detection, filters, noise reduction), but can also find their use in other fields such as approximating partial differentiation\cite{roth1997compilingstencils} and cellular automata.
+For example, a 2-dimensional $5 \times 5$ box blur filter over an input matrix $A$ can be mathemathically defined as:
+
+\begin{equation}
+    \texttt{Stencil}(x, y) = %
+        \sum_{i=-2}^{2} %
+        \sum_{j=-2}^{2} %
+        \frac{ A[x + i, y + j] }{25}
+    \label{eq:stencil_boxblur}
+\end{equation}
+
+In Accelerate, stencils are defined as listing \ref{lst:stencil_signature}, where the stencil function \texttt{stencil -> Exp b} takes in an N-dimensional tuple to produce a single value.
+The boundary condition handles how boundary values are handled, either as a predefined function such as \texttt{clamp} and \texttt{mirror}, or as a user defined function.
+
+\begin{listing}[!h]
+    \begin{minted}{haskell}    
+stencil :: forall sh stencil a b. (Stencil sh a stencil, Elt b)	 
+    -- stencil function
+    => (stencil -> Exp b)
+    -- boundary condition
+    -> Boundary (Array sh a)	
+    -- source array
+    -> Acc (Array sh a)	
+    -- destination array
+    -> Acc (Array sh b)	
+    \end{minted}
+    \caption{
+        The type signature of the stenciling function in Accelerate.
+    }
+    \label{lst:stencil_signature}
+\end{listing}
+
+To implement equation \ref{eq:stencil_boxblur} in Accelerate, we define a function to sum and divide all elements (listing \ref{lst:stencil_usuage}).
+
+\begin{listing}[!h]
+    \begin{minted}{haskell}
+-- Stencil types: included in Data.Array.Accelerate
+type Stencil5 a = (Exp a, Exp a, Exp a, Exp a, Exp a) 
+type Stencil5x5 a = (Stencil5 a, Stencil5 a, Stencil5 a, Stencil5 a, Stencil5 a) 
+
+-- Example of a 5x5 box blurring stencil filter
+boxblur5x5 :: Acc (Matrix Float) -> Acc (Matrix Float)
+boxblur5x5 = A.stencil s A.clamp
+  where
+    -- Take a 5x5 array, then select each element and concatenate them
+    s :: Stencil5x5 Float -> Exp Float
+    s = average . concatMap (^..each) . (^..each)
+
+    -- average all the elements in a list
+    average :: Fractional a => [a] -> a
+    average xs = sum xs / genericLength xs
+    \end{minted}
+    \caption{
+        How to use the accelerate stenciling function (listing \ref{lst:stencil_signature}) to produce a $5 \times 5$ box blur filter.
+    }
+    \label{lst:stencil_usuage}
+\end{listing}
 
 \subsection{Naive}
 \label{sec:stencil_naive}
 The naive implementation iterates over each of the outputs linearly, horizontally first.
 The temporal linearity translates to parallelism on GPUs where multiple threads work concurrently on each element of the output array.
+The naive implementation of the $5 \times 5$ box blur filter (equation \ref{eq:stencil_boxblur} and listing \ref{lst:stencil_usuage}) is compareable to the following naive CUDA C++ implementation (listing \ref{lst:stencil_cuda}).
+
+\begin{listing}[!h]
+    \begin{minted}{cuda}
+#define STENCIL_SIZE 5
+
+__global__ void stencil_naive(float *output, float *input, int width, int height, int N) {
+    int tid = blockIdx.x * blockDim.x + threadIdx.x;
+    int x = tid % width;
+    int y = tid / width;
+    
+    if (tid >= N) {
+        return;
+    }
+
+    float result = 0;
+    for (int d_i = -STENCIL_SIZE/2; d_i <= STENCIL_SIZE/2; d_i++) {
+        int i = min(height-1, max(0, y + d_i));
+        for (int d_j = -STENCIL_SIZE/2; d_j <= STENCIL_SIZE/2; d_j++) {
+            int j = min(width-1, max(0, x + d_j));
+            result += input[i * width + j];
+        }
+    }
+    output[tid] = result / (STENCIL_SIZE * STENCIL_SIZE);
+}
+    \end{minted}
+    \caption{
+        The naive CUDA C++ equivelant to listing \ref{lst:stencil_usuage}
+    }
+    \label{lst:stencil_cuda}
+\end{listing}
 
 While the naive implementation of stencil operations works well enough when enough rows of the input fit in the cache, it begins to fall in performance on larger inputs.
 
@@ -126,7 +213,7 @@ If equation \ref{eq:stencil_naive_optimal_memory} is satisfied, the amount of fe
 
 \TODO{GPU threading is different from CPU stuff yada yada}
 With multiple threads active, even more data is required to be kept in cache for optimal usuage.
-In the best case, all threads are cohered with overlapping accesses, and in the worst case, threads will be spread out more with less overlapping accesses.
+In the best case, all threads are cohesive with overlapping accesses, and in the worst case, threads will be spread out more with less overlapping accesses.
 Threads in GPUs are grouped by warps, threads contained within are always cohered, and therefore a guarantee for overlapping accesses.
 Therefore, only when multiple warps are executed on the same SM, divergence in accesses can occur.
 A single warp of 32 threads uses $\ceil{\frac{32 + S_w}{l}} S_h$ cache lines when the threads cover a single rows. 
@@ -219,18 +306,65 @@ We can define the number cache lines fetched in terms of the available cache by 
 \section{Matrix Multiplication}
 
 \subsection{Naive}
+\TODO{writewrite}
+\begin{listing}[!h]
+    \begin{minted}{cuda}
+__global__ void matrix_naive(float *o, float *a, float *b, int depth, int width, int height) {
+    int tid = blockIdx.x * blockDim.x + threadIdx.x;
+    int x = tid % width;
+    int y = tid / width;
+    
+    if (tid >= width * height) {
+        return;
+    }
 
-Given the output matrix of size $I_w \times I_h$ with input matrices of size $I_w \times D$ and $D \times I_h$, we can start reusing in the naive case only if
+    float result = 0;
+    for (int i = 0; i < depth; i++) {
+        result += a[y * depth + i] * b[x + i * width];
+    }
+    o[tid] = result;
+    
+}
+    \end{minted}
+    \caption{
+        The naive CUDA C++ implementation of matrix multiplication
+    }
+    \label{lst:mm_naive_cuda}
+\end{listing}
+
+Given the output matrix $C$ of size $I_w \times I_h$ with input matrices $A$ and $B$ of size $I_w \times D$ and $D \times I_h$ respectively, data from $B$ can be reused in the naive case only if we can both keep one row of $B$ and one column of $A$ loaded.
 
 \begin{equation}
     \label{eq:mm_naive_minimum_cache}
     M_l > \ceil{\frac{D}{L}} + D
 \end{equation}
 
-If equation \ref{eq:mm_naive_minimum_cache} is not satisfied then there is no reuse of data possible, and the amount of cache line fetches is
+\noindent
+If equation \ref{eq:mm_naive_minimum_cache} is satisfied, the amount of cacheloads is roughly
 
 \begin{equation}
-    F = \left( \ceil{\frac{D}{L}} + D \right) I_w I_h
+    F \approx \ceil{\frac{D}{L}} I_h + D I_w I_h
+\end{equation}
+
+\noindent
+In the case that equation \ref{eq:mm_naive_minimum_cache} is not satisfied, there is no reuse of data possible, and the amount of cache line fetches is
+
+\begin{equation}
+    F \approx \left( \ceil{\frac{D}{L}} + D \right) I_w I_h
+\end{equation}
+
+\noindent
+To reuse date from both matrix $A$ and $B$ requires to keep the entirity of $A$ cached until we work on the second row.
+
+\begin{equation}
+    M_l > \ceil{\frac{D}{L}} + \ceil{\frac{I_w D}{L}}
+\end{equation}
+
+\noindent
+This lowers the amount of cache loads significantly
+
+\begin{equation}
+    F \approx \ceil{\frac{D}{L}} I_h + \ceil{\frac{I_w}{L}} D
 \end{equation}
 
 \TODO{Split figure \ref{fig:st_matrix} up into their parts for better flow}

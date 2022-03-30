@@ -1,8 +1,10 @@
 Graphics Processing Units (GPUs) are specialized hardware that can manipulate large amounts of data in a highly parallel manner.
 The hardware's main purpose is processing graphical data, however modern use of GPUs is in the form of general-pupose computing on the GPU (GPGPU) where we exploit the GPUs many cores to run computations normally run on CPUs in parallel.
 
-This high performance GPU computing has become very accessible via high programming languages and libraries, which provide a limited set of operators, such as stencil, permute, fold, scan, which can manipulate data on a GPU \cite{chakravarty2011accelerating}.
-However, in most cases the compiled assembly has inefficient memory accesses with lower cache hit rates and uncoalesced accesses compared to manually tweaked code which requires in-depth knowledge about the architecture.
+This high performance GPU computing has become very accessible via high-level programming languages and libraries, which provide a limited set of operators, such as stencil, permute, fold, scan, which can manipulate data on a GPU \cite{chakravarty2011accelerating}.
+An obvious drawback of high-level languages is that low-level interfaces of the hardware becomes less available as the compiler and libraries handle these.
+In most cases, the compiled assembly has inefficient memory accesses with lower cache hit rates and uncoalesced accesses compared to manually tweaked code which requires in-depth knowledge about the architecture.
+On the other hand, any optimization done to the compiler or library will benefit the program.
 An approach that fits between improving the compiler and programmer skill, is to improve the thread scheduler.
 A smarter scheduler can achieve better cache and memory utilization \cite{nugteren2014study}.
 We propose a simple schedule to improve performance by leveraging the structure of memory accesses in the high level GPGPU framework Accelerate \cite{chakravarty2011accelerating}.
@@ -23,3 +25,13 @@ The main contributions of this thesis are:
 
 \section{Outline}
 \TODO{Chapter x introduces yada, yada}
+
+\section{Common variable names}
+\begin{itemize}
+    \item $L$ Cache line size (elements)
+    \item $M$ Cache size (elements)
+    \item $M_L$ Cache size (number of cache lines)
+    \item $F$ Memory fetches
+    \item $I_w$, $I_h$ input size (number of tasks to produce the output)
+    \item $S_w$, $S_w$ stencil size
+\end{itemize}

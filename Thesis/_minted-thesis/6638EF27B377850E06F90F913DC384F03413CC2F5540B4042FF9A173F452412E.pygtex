@@ -1,0 +1,17 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{c+c1}{\PYGZhy{}\PYGZhy{} Stencil types: included in Data.Array.Accelerate}
+\PYG{k+kr}{type} \PYG{k+kt}{Stencil5} \PYG{n}{a} \PYG{o+ow}{=} \PYG{p}{(}\PYG{k+kt}{Exp} \PYG{n}{a}\PYG{p}{,} \PYG{k+kt}{Exp} \PYG{n}{a}\PYG{p}{,} \PYG{k+kt}{Exp} \PYG{n}{a}\PYG{p}{,} \PYG{k+kt}{Exp} \PYG{n}{a}\PYG{p}{,} \PYG{k+kt}{Exp} \PYG{n}{a}\PYG{p}{)}
+\PYG{k+kr}{type} \PYG{k+kt}{Stencil5x5} \PYG{n}{a} \PYG{o+ow}{=} \PYG{p}{(}\PYG{k+kt}{Stencil5} \PYG{n}{a}\PYG{p}{,} \PYG{k+kt}{Stencil5} \PYG{n}{a}\PYG{p}{,} \PYG{k+kt}{Stencil5} \PYG{n}{a}\PYG{p}{,} \PYG{k+kt}{Stencil5} \PYG{n}{a}\PYG{p}{,} \PYG{k+kt}{Stencil5} \PYG{n}{a}\PYG{p}{)}
+
+\PYG{c+c1}{\PYGZhy{}\PYGZhy{} Example of a 5x5 box blurring stencil filter}
+\PYG{n+nf}{boxblur5x5} \PYG{o+ow}{::} \PYG{k+kt}{Acc} \PYG{p}{(}\PYG{k+kt}{Matrix} \PYG{k+kt}{Float}\PYG{p}{)} \PYG{o+ow}{\PYGZhy{}\PYGZgt{}} \PYG{k+kt}{Acc} \PYG{p}{(}\PYG{k+kt}{Matrix} \PYG{k+kt}{Float}\PYG{p}{)}
+\PYG{n+nf}{boxblur5x5} \PYG{o+ow}{=} \PYG{k+kt}{A}\PYG{o}{.}\PYG{n}{stencil} \PYG{n}{s} \PYG{k+kt}{A}\PYG{o}{.}\PYG{n}{clamp}
+  \PYG{k+kr}{where}
+    \PYG{c+c1}{\PYGZhy{}\PYGZhy{} Take a 5x5 array, then select each element and concatenate them}
+    \PYG{n}{s} \PYG{o+ow}{::} \PYG{k+kt}{Stencil5x5} \PYG{k+kt}{Float} \PYG{o+ow}{\PYGZhy{}\PYGZgt{}} \PYG{k+kt}{Exp} \PYG{k+kt}{Float}
+    \PYG{n}{s} \PYG{o+ow}{=} \PYG{n}{average} \PYG{o}{.} \PYG{n}{concatMap} \PYG{p}{(}\PYG{o}{\PYGZca{}..}\PYG{n}{each}\PYG{p}{)} \PYG{o}{.} \PYG{p}{(}\PYG{o}{\PYGZca{}..}\PYG{n}{each}\PYG{p}{)}
+
+    \PYG{c+c1}{\PYGZhy{}\PYGZhy{} average all the elements in a list}
+    \PYG{n}{average} \PYG{o+ow}{::} \PYG{k+kt}{Fractional} \PYG{n}{a} \PYG{o+ow}{=\PYGZgt{}} \PYG{p}{[}\PYG{n}{a}\PYG{p}{]} \PYG{o+ow}{\PYGZhy{}\PYGZgt{}} \PYG{n}{a}
+    \PYG{n}{average} \PYG{n}{xs} \PYG{o+ow}{=} \PYG{n}{sum} \PYG{n}{xs} \PYG{o}{/} \PYG{n}{genericLength} \PYG{n}{xs}
+\end{Verbatim}

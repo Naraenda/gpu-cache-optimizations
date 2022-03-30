@@ -28,6 +28,11 @@
         framesep=2mm,
         linenos
     }
+    \setminted[cuda]{
+        frame=lines,
+        framesep=2mm,
+        linenos
+    }
 \usepackage{hhline}
 \usepackage{amsmath}
 \usepackage{amssymb}
@@ -75,16 +80,6 @@
 \TODO{Write thisss}
 
 \tableofcontents
-
-\TODO{Make sure equations are consitent:}
-\begin{itemize}
-    \item $L$ Cache line size (elements)
-    \item $M$ Cache size (elements)
-    \item $M_L$ Cache size (number of cache lines)
-    \item $F$ Memory fetches
-    \item $I_w$, $I_h$ input size (number of tasks to produce the output)
-    \item $S_w$, $S_w$ stencil size
-\end{itemize}
 
 \chapter{Introduction}
 \input{chapters/01_introduction.tex}

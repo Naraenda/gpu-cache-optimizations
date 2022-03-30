@@ -1,0 +1,11 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{n+nf}{stencil} \PYG{o+ow}{::} \PYG{n}{forall} \PYG{n}{sh} \PYG{n}{stencil} \PYG{n}{a} \PYG{n}{b}\PYG{o}{.} \PYG{p}{(}\PYG{k+kt}{Stencil} \PYG{n}{sh} \PYG{n}{a} \PYG{n}{stencil}\PYG{p}{,} \PYG{k+kt}{Elt} \PYG{n}{b}\PYG{p}{)}	
+    \PYG{c+c1}{\PYGZhy{}\PYGZhy{} stencil function}
+    \PYG{o+ow}{=\PYGZgt{}} \PYG{p}{(}\PYG{n}{stencil} \PYG{o+ow}{\PYGZhy{}\PYGZgt{}} \PYG{k+kt}{Exp} \PYG{n}{b}\PYG{p}{)}
+    \PYG{c+c1}{\PYGZhy{}\PYGZhy{} boundary condition}
+    \PYG{o+ow}{\PYGZhy{}\PYGZgt{}} \PYG{k+kt}{Boundary} \PYG{p}{(}\PYG{k+kt}{Array} \PYG{n}{sh} \PYG{n}{a}\PYG{p}{)}	
+    \PYG{c+c1}{\PYGZhy{}\PYGZhy{} source array}
+    \PYG{o+ow}{\PYGZhy{}\PYGZgt{}} \PYG{k+kt}{Acc} \PYG{p}{(}\PYG{k+kt}{Array} \PYG{n}{sh} \PYG{n}{a}\PYG{p}{)}	
+    \PYG{c+c1}{\PYGZhy{}\PYGZhy{} destination array}
+    \PYG{o+ow}{\PYGZhy{}\PYGZgt{}} \PYG{k+kt}{Acc} \PYG{p}{(}\PYG{k+kt}{Array} \PYG{n}{sh} \PYG{n}{b}\PYG{p}{)}	
+\end{Verbatim}

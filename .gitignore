@@ -15,3 +15,8 @@
 
 # Backups
 Proposal/Versions
+
+# Generated NVCC files
+*.exe
+*.exp
+*.lib

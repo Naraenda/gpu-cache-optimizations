@@ -33,7 +33,7 @@ Executions on a GPU are directed on both the host and device (GPU).
 The host side controls how these kernels should be executed, namely how the threads should be launched and executed.
 Threads are grouped and defined on a 2 level hierarchy: threads are grouped together in \textit{cooperative thread arrays} (CTAs), also known as thread blocks, and multiple CTAs can be queued for the execution of a single kernel.
 Both can be controlled upon executing a kernel: the amount of threads per CTA (threadblock size) and the total amount of CTAs (gridsize).
-CTAs get assigned to SMs in a round-robin fashion.
+CTAs get assigned to SMs in an arbitrary manner.
 
 When an SM executes a CTA, it splits the work into warps, a grouping of 32-threads.
 On architecture before Volta, a single warp is executed in a single instruction, multiple threads fashion, where a single program counter is shared amongst the 32 threads.

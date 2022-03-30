@@ -76,9 +76,25 @@ To work around this, in the column approach we allow the last column to be narro
     \label{fig:column_vs_striding}
 \end{figure}
 
-\TODO{implementation details}
+The index mapping $i \mapsto j$ to get the columning order consists out of four parts (figure \ref{fig:column_remap_parts}):
+\begin{itemize}
+    \item The starting offset of the column $o$.
+    \item The column width $w'$.
+    \item The index within a column $i'$
+    \item The position within the column $(x, y)$
+\end{itemize}
 
-We can construct the index mapping $i \mapsto j$. First, we calculate the offset for the starting index of the column we need to map to
+\begin{figure}[!hb]
+    \centering
+    \includegraphics[width=8cm]{sketches/column_remap_parts.png}
+    \caption{
+        \TODO{aGKLJLKSG}
+    }
+    \label{fig:column_remap_parts}
+\end{figure}
+
+
+First, we calculate the offset for the starting index of the column we need to map to
 
 \begin{align}
     o  &= \floor{\frac{i}{I_h w}} w
@@ -342,10 +358,6 @@ In GPUs this translates to less cohesive threads as threadblocks get assigned in
     \label{fig:stencil_column_vs_tiling_pattern}
 \end{figure}
 
-\TODO{WRITEAAAAAAAAAAAAAA}
-
-\vspace{4cm}
-
 The size of the cache needed $M_{size}$ can be approximated given the units per cache line $L$, column width $c$, stencil width $s_{w}$ and height $s_{h}$, and the number of active threads $t$. The required memory is independent of the size of the input data.
 
 \[
@@ -379,15 +391,31 @@ The amount of fetches is similar to equation \ref{eq:stencil_tiling_fetches}, ho
 
 \TODO{Calculate column parameters, spatial temporal diagrams}
 
+
 \section{Matrix Multiplication}
+Matrix multiplication may benefit from a column based approach due to many vertical reads.
+Section \ref{sec:} \TODO{ref} showed that continuous vertical reads are more expensive than continuous horizontal reads (streaming).
+Therefore, we want to keep data that is read vertically in cache for as long as possible.
+The naive implementation (section \ref{sec:} \TODO{ref}) showed that working on an entire row of outputs requires to load the whole $I_w \times D$ data
+By limiting the horizontal space we work on, we can control what stays in case, increasing reuse.
 
 
-A matrix multiplication of $A \cdot B = C$ consist out of three parts: reading horizontally from matrix $A$, reading vertically from matrix $B$, and writing to matrix $C$.
-Since writing the output does not block any further instructions, it can be ignored.
-Reading horizontally is significantly cheaper due to cache locality.
+\begin{figure}
+    \centering
+    \includegraphics[width=8cm]{sketches/matrix_single_element_footprint.png}
+    \label{fig:mm_cache_footprint}
+    \caption{
+        \TODO{asjlahkjg}
+    }
+\end{figure}
+
+A matrix multiplication of $A \cdot B = C$ with $C$ being of size $I_w \times I_h$, and $A$ and $B$ being size $I_w \times D$ and $D \times I_h$ respectively, we compute the lower bound on the required cache by seperating the horizontal and vertical reads.
+
+
+
 
 \[
-    M_{size} = u \left(h c + w \ceil{\frac{t}{c}}\right)
+    M_{l} = \ceil{\frac{d}{L}} + d\ceil{\frac{c}{L}}
 \]
 
 Similarly to stencil operations, approximate $M_{size}$ using the asymptote
