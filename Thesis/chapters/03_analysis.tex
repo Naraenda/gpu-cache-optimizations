@@ -4,9 +4,14 @@
 \TODO{Ass. 2 Assume best case associativity, no conflicts}
 
 \section{Spatial Temporal Analysis}
-The memory accesses of algorithms can be plotted in a spatial-temporal diagram, with the address space on the spatial axis and order of access on the temporal axis.
-Since only the thread order can be manipulated, elements on the temporal can be condensced by grouping them by thread.
-Additionally, a cache simulation can annotate this diagram with the cache level (L1, L2, RAM) of each memory address.
+The memory accesses of an algorithm can be plotted in a spatial-temporal diagram, with the address space on the spatial axis and order of access on the temporal axis.
+Since only the thread order can be manipulated, we do not need the granuality of the individual memory accesses within a thread.
+This also avoids the problem of threads being concurrent and puts the focus on the temporal locaity between threads.
+A different thread order shuffles the columns within this diagram: the same data is accessed but simply in a different order.
+
+Additionally, we annotate this diagram with the cache level (L1, L2, RAM) of each memory address by simulating memory.
+For the simulation we will use a simple LRU eviction policy which most Nvidia GPUs use and is similar to newer variation on the newer architectures like Turing and Volta, (see section \ref{sec:cache_gpu}).
+
 
 \TODO{Example diagrams, cache simulation}
 

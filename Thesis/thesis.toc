@@ -11,15 +11,15 @@
 \contentsline {subsection}{\numberline {2.1.4}Performance of Access Patterns}{7}{}%
 \contentsline {section}{\numberline {2.2}CPU vs GPU based multi-threading}{7}{}%
 \contentsline {section}{\numberline {2.3}Accelerate}{7}{}%
-\contentsline {section}{\numberline {2.4}Commonly Applicable Cache Improvements}{7}{}%
-\contentsline {subsection}{\numberline {2.4.1}Optimizations of Blocked Algorithms}{7}{}%
+\contentsline {section}{\numberline {2.4}Commonly Applicable Cache Improvements}{8}{}%
+\contentsline {subsection}{\numberline {2.4.1}Optimizations of Blocked Algorithms}{8}{}%
 \contentsline {subsection}{\numberline {2.4.2}CTA Clustering}{8}{}%
 \contentsline {subsection}{\numberline {2.4.3}PAVER}{8}{}%
 \contentsline {chapter}{\numberline {3}Analysis of Existing Approaches}{9}{}%
 \contentsline {section}{\numberline {3.1}Assumptions}{9}{}%
 \contentsline {section}{\numberline {3.2}Spatial Temporal Analysis}{9}{}%
 \contentsline {section}{\numberline {3.3}Stencil Operations}{9}{}%
-\contentsline {subsection}{\numberline {3.3.1}Naive}{10}{}%
+\contentsline {subsection}{\numberline {3.3.1}Naive}{9}{}%
 \contentsline {subsection}{\numberline {3.3.2}Tiling}{12}{}%
 \contentsline {section}{\numberline {3.4}Matrix Multiplication}{13}{}%
 \contentsline {subsection}{\numberline {3.4.1}Naive}{13}{}%

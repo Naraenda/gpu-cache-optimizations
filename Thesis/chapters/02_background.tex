@@ -108,6 +108,37 @@ Another option is to hint cache streaming, where the loaded cache line will have
 Similar operations exist for writing data to memory.
 In both cases it is up to the compiler and programmer to exploit this for extra performance \cite{nvidia2021cudadocs}.
 
+
+\begin{table}
+    \centering
+    \begin{tabular}{l l l|r r r r}
+        & Architecture & &    Turing &      Volta & Pascal & Maxwell
+        \\
+        & GPU Board    & &        T4 &       V100 &   P100 &     M60
+        \\
+        & GPU Chip     & &     TU104 &      GV100 &  GP100 &   GM204
+        \\
+        & Year         & &      2018 &       2017 &   2016 &    2014
+        \\
+        \hline
+        L1 Cache%
+        & Size     & KiB &  32 or 64 & 32\dots128 &     24 &      24
+        \\
+        & Line size  & B &        32 &         32 &     32 &      32
+        \\
+        \hline
+        L2 Cache%
+        & Size     & KiB &      4096 &      6144 &   4096 &    2048
+        \\
+        & Line size  & B &        64 &        64 &     32 &      32
+        \\
+    \end{tabular}
+    \caption{
+        Summary of the cache specification on various Nvidia GPUs and architectures. 
+        Adapted from \citeauthor{jia2019dissecting}\cite{jia2019dissecting}.
+    }
+\end{table}
+
 \subsection{Performance of Access Patterns}
 \citeauthor{lam1991cache} and \citeauthor{meyer2003algorithms} describe two types of reference reuse\cite{lam1991cache, meyer2003algorithms}:
 \begin{itemize}

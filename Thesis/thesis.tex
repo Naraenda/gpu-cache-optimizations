@@ -68,6 +68,13 @@
     }
 }
 
+\tikzset{
+    ->-/.style={decoration={
+        markings,
+        mark=at position .5 with {\arrow{>}}},postaction={decorate}
+    }
+}
+
 \title{Improving Performance in Structured GPGPU Workloads via Specialized Thread Schedules}
 \author{Naraenda Prasetya}
 \date{2022}

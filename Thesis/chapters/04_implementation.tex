@@ -76,6 +76,7 @@ To work around this, in the column approach we allow the last column to be narro
     \label{fig:column_vs_striding}
 \end{figure}
 
+\noindent
 The index mapping $i \mapsto j$ to get the columning order consists out of four parts (figure \ref{fig:column_remap_parts}):
 \begin{itemize}
     \item The starting offset of the column $o$.
@@ -86,9 +87,39 @@ The index mapping $i \mapsto j$ to get the columning order consists out of four 
 
 \begin{figure}[!hb]
     \centering
-    \includegraphics[width=8cm]{sketches/column_remap_parts.png}
+    \begin{tikzpicture}
+        % offset
+        \node at (2, 0.5) {offset $o$};
+        \draw[decorate, thick, decoration={brace}] (0.1,0.1) --  (3.9,0.1);
+
+        % x
+        \node at (5.5, 0.5) {$x$ pos. in column};
+        \draw[decorate, thick, decoration={brace}] (4.1,0.1) --  (6.9,0.1);
+
+        % y
+        \node [rotate=90] at (-0.5, -1.5) {$y$ pos. in column};
+        \draw[decorate, thick, decoration={brace}] (-0.1,-2.9) -- (-0.1,-0.1);
+
+        % current column:
+        \draw[gray, pattern=north east lines, pattern color=gray!50] (4,0) rectangle (8, -6);
+
+        % input array:
+        \draw (0, 0) rectangle (12, -6);
+
+        \draw[loosely dotted, very thick] (7, 0) -- (7,-6);
+        \draw[loosely dotted, very thick] (0, -3) -- (12,-3);
+
+        \foreach \i in {0.5,1.0,...,5} {
+            \draw[gray, ->-] (4.5,-\i) -- (7.5,-\i);
+            \draw[gray, ->-, dashed] (7.5,-\i) -- (4.5,-\i - 0.5);
+        }
+        \draw[gray, ->-] (4.5,-5.5) -- (7.5,-5.5);
+        
+        \node[fill, circle, label={[fill=white]above right:$i' \mapsto j$}] at (7, -3) {};
+
+    \end{tikzpicture}
     \caption{
-        \TODO{aGKLJLKSG}
+        The anatomy of the column based index remapping.
     }
     \label{fig:column_remap_parts}
 \end{figure}
@@ -399,13 +430,33 @@ Therefore, we want to keep data that is read vertically in cache for as long as 
 The naive implementation (section \ref{sec:} \TODO{ref}) showed that working on an entire row of outputs requires to load the whole $I_w \times D$ data
 By limiting the horizontal space we work on, we can control what stays in case, increasing reuse.
 
-
 \begin{figure}
     \centering
-    \includegraphics[width=8cm]{sketches/matrix_single_element_footprint.png}
+    \begin{tikzpicture}[scale=0.5]
+        % Cached areas
+        \draw[gray, pattern=north east lines, pattern color=gray!50] (2.5, 0.5) rectangle +(4, 8);
+        \draw[gray, pattern=north east lines, pattern color=gray!50] (2.5,-3.5) rectangle +(4, 1);
+
+        % Work areas
+        \draw[gray, pattern=north west lines, pattern color=gray] ( 4.5, 0.5) rectangle +( 1, 8);
+        \draw[gray, pattern=north west lines, pattern color=gray] ( 4.5,-3.5) rectangle +( 1, 1);
+        \draw[gray, pattern=north west lines, pattern color=gray] (-0.5,-3.5) rectangle +(-8, 1);
+
+        \draw[gray, dashed] (-0.5, -2.5) -- +(3, 0);
+        \draw[gray, dashed] (-0.5, -3.5) -- +(3, 0);
+        
+        \draw[gray, dashed] (2.5, 0.5) -- +(0, -3);
+        \draw[gray, dashed] (4.5, 0.5) -- +(0, -3);
+        \draw[gray, dashed] (5.5, 0.5) -- +(0, -3);
+        \draw[gray, dashed] (6.5, 0.5) -- +(0, -3);
+
+        \draw ( 0.5,  0.5) rectangle +( 8,  8);
+        \draw ( 0.5, -0.5) rectangle +( 8, -8);
+        \draw (-0.5, -0.5) rectangle +(-8, -8);
+    \end{tikzpicture}
     \label{fig:mm_cache_footprint}
     \caption{
-        \TODO{asjlahkjg}
+        Calculating a single element in a matrix multiplication can exploit the cheaper memory accesses on the same cachelines. 
     }
 \end{figure}
 
