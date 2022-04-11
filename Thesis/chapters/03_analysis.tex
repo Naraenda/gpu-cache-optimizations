@@ -1,9 +1,9 @@
-
 \section{Assumptions}
-\TODO{Ass. 1 LRU (least recently used) eviction}
-\TODO{Ass. 2 Assume best case associativity, no conflicts}
+During the analysis, we will asume a cache with an LRU eviction policy.
+Additionally, we will not take into consideration cache associativity to simplify the analysis.
 
 \section{Spatial Temporal Analysis}
+\label{sec:st_analysis}
 The memory accesses of an algorithm can be plotted in a spatial-temporal diagram, with the address space on the spatial axis and order of access on the temporal axis.
 Since only the thread order can be manipulated, we do not need the granuality of the individual memory accesses within a thread.
 This also avoids the problem of threads being concurrent and puts the focus on the temporal locaity between threads.
@@ -11,9 +11,9 @@ A different thread order shuffles the columns within this diagram: the same data
 
 Additionally, we annotate this diagram with the cache level (L1, L2, RAM) of each memory address by simulating memory.
 For the simulation we will use a simple LRU eviction policy which most Nvidia GPUs use and is similar to newer variation on the newer architectures like Turing and Volta, (see section \ref{sec:cache_gpu}).
+\TODO{Feedback: do I need a smaller example?}
 
-
-\TODO{Example diagrams, cache simulation}
+The resulting spatial temporal diagram (for example, figure \ref{fig:st_stencil_naive}) has the vertical axis describing the location in a 2D array which is mapped to 1D address space and the horizontal axis describing time. \fsquare{red} are addresses of cache lines that are brought into cache. \fsquare{black} are addresses being accessed. \fsquare{gray} are addresses in cache.
 
 \section{Stencil Operations}
 
@@ -34,7 +34,7 @@ For example, a 2-dimensional $5 \times 5$ box blur filter over an input matrix $
 In Accelerate, stencils are defined as listing \ref{lst:stencil_signature}, where the stencil function \texttt{stencil -> Exp b} takes in an N-dimensional tuple to produce a single value.
 The boundary condition handles how boundary values are handled, either as a predefined function such as \texttt{clamp} and \texttt{mirror}, or as a user defined function.
 
-\begin{listing}[!h]
+\begin{listing}[H]
     \begin{minted}{haskell}    
 stencil :: forall sh stencil a b. (Stencil sh a stencil, Elt b)	 
     -- stencil function
@@ -54,7 +54,7 @@ stencil :: forall sh stencil a b. (Stencil sh a stencil, Elt b)
 
 To implement equation \ref{eq:stencil_boxblur} in Accelerate, we define a function to sum and divide all elements (listing \ref{lst:stencil_usuage}).
 
-\begin{listing}[!h]
+\begin{listing}[H]
     \begin{minted}{haskell}
 -- Stencil types: included in Data.Array.Accelerate
 type Stencil5 a = (Exp a, Exp a, Exp a, Exp a, Exp a) 
@@ -84,7 +84,7 @@ The naive implementation iterates over each of the outputs linearly, horizontall
 The temporal linearity translates to parallelism on GPUs where multiple threads work concurrently on each element of the output array.
 The naive implementation of the $5 \times 5$ box blur filter (equation \ref{eq:stencil_boxblur} and listing \ref{lst:stencil_usuage}) is compareable to the following naive CUDA C++ implementation (listing \ref{lst:stencil_cuda}).
 
-\begin{listing}[!h]
+\begin{listing}[H]
     \begin{minted}{cuda}
 #define STENCIL_SIZE 5
 
@@ -116,34 +116,38 @@ __global__ void stencil_naive(float *output, float *input, int width, int height
 
 While the naive implementation of stencil operations works well enough when enough rows of the input fit in the cache, it begins to fall in performance on larger inputs.
 
-\TODO{Split figure \ref{fig:st_stencil} up into their respective parts}
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|c c|}
+        \hline
+        Cache lines      & 24   \\
+        Cache line width & 4    \\
+        Eviction policy  & LRU  \\
+        \hline
+        Stencil size     & 7x7  \\
+        Input Size       & 16x16\\
+        Column size      & 8    \\
+        \hline
+    \end{tabular}
+    \caption{
+        The input parameters to generate the spatial-temporal diagrams for stencil operations.
+    }
+    \label{tab:sim_stencil_params}
+\end{table}
 
 % fig:st_stencil
 \begin{figure}[!hb]
     \centering
-    \subfloat[The spatial temporal diagram of a 7x7 stencil with linear ordering.]{
-        \begin{tikzpicture}
-            \node (image) at (0,0) {\includegraphics[width=0.4\textwidth]{st_diagrams/stencil7x7_linear.png}};
-            \draw [->] (image.south west) -- ++(2,0) node[right]{\footnotesize\textit{Time}};
-            \draw [->] (image.south west) -- ++(0,2) node[rotate=90, above]{\footnotesize\textit{Address}};
-        \end{tikzpicture}
-        \label{fig:st_stencil_naive}
-    }
-    \qquad
-    \subfloat[The spatial temporal diagram of a 7x7 stencil with a column of size 4 ordering.]{
-        \centering
-        \begin{tikzpicture}
-            \node (image) at (0,0) {\includegraphics[width=0.4\textwidth]{st_diagrams/stencil7x7_column_4.png}};
-            \draw [->] (image.south west) -- ++(2,0) node[right]{\footnotesize\textit{Time}};
-            \draw [->] (image.south west) -- ++(0,2) node[rotate=90, above]{\footnotesize\textit{Address}};
-        \end{tikzpicture}
-        \label{fig:st_stencil_column}
-    }
-
+    \begin{tikzpicture}
+        \node (image) at (0,0) {\includegraphics[width=0.4\textwidth]{st_diagrams/stencil7x7_linear.png}};
+        \draw [->] (image.south west) -- ++(2,0) node[right]{\footnotesize\textit{Time}};
+        \draw [->] (image.south west) -- ++(0,2) node[rotate=90, above]{\footnotesize\textit{Address}};
+    \end{tikzpicture}
     \caption{
-        The spatial temporal diagrams of a 7x7 stencil. The vertical axis describes the location in a 2D array which is mapped to 1D address space. The horizontal axis describes time. \fsquare{red} are addresses of cache lines that are brought into cache. \fsquare{black} are addresses being accessed. \fsquare{gray} are addresses in cache.
+        The spatial temporal diagram of a 7x7 stencil with linear ordering.
+        See section \ref{sec:st_analysis}.
     }
-    \label{fig:st_stencil}
+    \label{fig:st_stencil_naive}
 \end{figure}
 
 % fig:stencil_naive_loading_pattern
@@ -312,7 +316,7 @@ We can define the number cache lines fetched in terms of the available cache by 
 
 \subsection{Naive}
 \TODO{writewrite}
-\begin{listing}[!h]
+\begin{listing}[H]
     \begin{minted}{cuda}
 __global__ void matrix_naive(float *o, float *a, float *b, int depth, int width, int height) {
     int tid = blockIdx.x * blockDim.x + threadIdx.x;
@@ -336,6 +340,44 @@ __global__ void matrix_naive(float *o, float *a, float *b, int depth, int width,
     }
     \label{lst:mm_naive_cuda}
 \end{listing}
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|c c|}
+        \hline
+        Cache lines      & 32   \\
+        Cache line width & 4    \\
+        Eviction policy  & LRU  \\
+        \hline
+        Input Size       & 16x16\\
+        Column size      & 8    \\
+        \hline
+    \end{tabular}
+    \caption{
+        The input parameters to generate the spatial-temporal diagrams for matrix multiplications.
+    }
+    \label{tab:sim_matrix_params}
+\end{table}
+
+% fig:st_matrix
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}[spy using outlines={rectangle, magnification=4,connect spies}]
+        \node (image) at (0,0) {\includegraphics[width=0.25\textwidth]{st_diagrams/matrix_linear.png}};
+        \draw [->] (image.south west) -- ++(2,0) node[right]{\footnotesize\textit{Time}};
+        \draw [->] (image.south west) -- ++(0,8.5) node[rotate=90, above left]{\footnotesize\textit{Memory Addresses}};
+
+        \coordinate (p) at (0, 1);
+        \coordinate (v) at (3.3, 2);
+        \spy[width=2.4cm,height=4cm] on (p) in node [fill=white] at (v);
+    \end{tikzpicture}
+
+    \caption{
+        The spatial temporal diagram of matrix multiplication with linear ordering. 
+        See section \ref{sec:st_analysis}.
+    }
+    \label{fig:st_matrix_naive}
+\end{figure}
 
 Given the output matrix $C$ of size $I_w \times I_h$ with input matrices $A$ and $B$ of size $I_w \times D$ and $D \times I_h$ respectively, data from $B$ can be reused in the naive case only if we can both keep one row of $B$ and one column of $A$ loaded.
 
@@ -372,41 +414,5 @@ This lowers the amount of cache loads significantly
     F \approx \ceil{\frac{D}{L}} I_h + \ceil{\frac{I_w}{L}} D
 \end{equation}
 
-\TODO{Split figure \ref{fig:st_matrix} up into their parts for better flow}
-% fig:st_matrix
-\begin{figure}[!h]
-    \centering
-    \subfloat[The spatial temporal diagram of matrix multiplication with linear ordering.]{
-        \begin{tikzpicture}[spy using outlines={rectangle, magnification=4,connect spies}]
-            \node (image) at (0,0) {\includegraphics[width=0.25\textwidth]{st_diagrams/matrix_linear.png}};
-            \draw [->] (image.south west) -- ++(2,0) node[right]{\footnotesize\textit{Time}};
-            \draw [->] (image.south west) -- ++(0,8.5) node[rotate=90, above left]{\footnotesize\textit{Memory Addresses}};
-
-            \coordinate (p) at (0, 1);
-            \coordinate (v) at (3.3, 2);
-            \spy[width=2.4cm,height=4cm] on (p) in node [fill=white] at (v);
-        \end{tikzpicture}
-        \label{fig:st_matrix_naive}
-    }
-    \qquad
-    \subfloat[The spatial temporal diagram of a matrix multiplication with a column of size 4 ordering.]{
-        \centering
-        \begin{tikzpicture}[spy using outlines={rectangle, magnification=4,connect spies}]
-            \node (image) at (0,0) {\includegraphics[width=0.25\textwidth]{st_diagrams/matrix_column_4.png}};
-            \draw [->] (image.south west) -- ++(2,0) node[right]{\footnotesize\textit{Time}};
-            \draw [->] (image.south west) -- ++(0,8.5) node[rotate=90, above left]{\footnotesize\textit{Memory Addresses}};
-
-            \coordinate (p) at (0, 1);
-            \coordinate (v) at (3.3, 2);
-            \spy[width=2.4cm,height=4cm] on (p) in node [fill=white] at (v);
-        \end{tikzpicture}
-        \label{fig:st_matrix_column}
-    }
-
-    \caption{
-        The spatial temporal diagrams of a matrix multiplication. The vertical axis describes the location in a 2D array which is mapped to 1D address space. The horizontal axis describes time. \fsquare{red} are addresses of cache lines that are brought into cache. \fsquare{black} are addresses being accessed. \fsquare{gray} are addresses in cache.
-    }
-    \label{fig:st_matrix}
-\end{figure}
 
 \subsection{Tiling}

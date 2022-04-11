@@ -389,6 +389,20 @@ In GPUs this translates to less cohesive threads as threadblocks get assigned in
     \label{fig:stencil_column_vs_tiling_pattern}
 \end{figure}
 
+\begin{figure}
+    \centering
+    \begin{tikzpicture}
+        \node (image) at (0,0) {\includegraphics[width=0.4\textwidth]{st_diagrams/stencil7x7_column_4.png}};
+        \draw [->] (image.south west) -- ++(2,0) node[right]{\footnotesize\textit{Time}};
+        \draw [->] (image.south west) -- ++(0,2) node[rotate=90, above]{\footnotesize\textit{Address}};
+    \end{tikzpicture}
+    \caption{
+        The spatial temporal diagram of a 7x7 stencil with a column of size 4 ordering.
+        See section \ref{sec:st_analysis}.
+    }
+    \label{fig:st_stencil_column}
+\end{figure}
+
 The size of the cache needed $M_{size}$ can be approximated given the units per cache line $L$, column width $c$, stencil width $s_{w}$ and height $s_{h}$, and the number of active threads $t$. The required memory is independent of the size of the input data.
 
 \[
@@ -462,7 +476,23 @@ By limiting the horizontal space we work on, we can control what stays in case, 
 
 A matrix multiplication of $A \cdot B = C$ with $C$ being of size $I_w \times I_h$, and $A$ and $B$ being size $I_w \times D$ and $D \times I_h$ respectively, we compute the lower bound on the required cache by seperating the horizontal and vertical reads.
 
+\begin{figure}
+    \centering
+    \begin{tikzpicture}[spy using outlines={rectangle, magnification=4,connect spies}]
+        \node (image) at (0,0) {\includegraphics[width=0.25\textwidth]{st_diagrams/matrix_column_4.png}};
+        \draw [->] (image.south west) -- ++(2,0) node[right]{\footnotesize\textit{Time}};
+        \draw [->] (image.south west) -- ++(0,8.5) node[rotate=90, above left]{\footnotesize\textit{Memory Addresses}};
 
+        \coordinate (p) at (0, 1);
+        \coordinate (v) at (3.3, 2);
+        \spy[width=2.4cm,height=4cm] on (p) in node [fill=white] at (v);
+    \end{tikzpicture}
+    \caption{
+        The spatial temporal diagram of a matrix multiplication with a column of size 4 ordering.
+        See section \ref{sec:st_analysis}.
+    }
+    \label{fig:st_matrix_column}
+\end{figure}
 
 
 \[
