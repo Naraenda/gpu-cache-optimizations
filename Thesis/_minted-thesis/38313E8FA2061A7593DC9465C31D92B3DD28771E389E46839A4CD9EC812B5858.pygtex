@@ -1,0 +1,44 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{k+kr}{\PYGZus{}\PYGZus{}global\PYGZus{}\PYGZus{}}\PYG{+w}{ }\PYG{k+kt}{void}\PYG{+w}{ }\PYG{n}{my\PYGZus{}kernel}\PYG{p}{(}\PYG{k+kt}{int}\PYG{+w}{ }\PYG{n}{width}\PYG{p}{,}\PYG{+w}{ }\PYG{p}{[...])\PYGZob{}}
+\PYG{+w}{    }\PYG{c+c1}{// For a given thread ID we can compute the}
+\PYG{+w}{    }\PYG{c+c1}{// new thread ID and it\PYGZsq{}s x, y position:}
+\PYG{+w}{    }\PYG{k+kt}{int}\PYG{+w}{ }\PYG{n}{tid}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n+nb}{blockIdx}\PYG{p}{.}\PYG{n}{x}\PYG{+w}{ }\PYG{o}{*}\PYG{+w}{ }\PYG{n+nb}{blockDim}\PYG{p}{.}\PYG{n}{x}\PYG{+w}{ }\PYG{o}{+}\PYG{+w}{ }\PYG{n+nb}{threadIdx}\PYG{p}{.}\PYG{n}{x}\PYG{p}{;}
+\PYG{+w}{    }\PYG{k+kt}{int}\PYG{+w}{ }\PYG{n}{x}\PYG{p}{;}\PYG{+w}{ }\PYG{c+c1}{// originally x = tid \PYGZpc{} width;}
+\PYG{+w}{    }\PYG{k+kt}{int}\PYG{+w}{ }\PYG{n}{y}\PYG{p}{;}\PYG{+w}{ }\PYG{c+c1}{// originally y = tid / width;}
+
+\PYG{+w}{    }\PYG{k}{if}\PYG{+w}{ }\PYG{p}{(}\PYG{n}{tid}\PYG{+w}{ }\PYG{o}{\PYGZgt{}=}\PYG{+w}{ }\PYG{n}{width}\PYG{+w}{ }\PYG{o}{*}\PYG{+w}{ }\PYG{n}{height}\PYG{p}{)}\PYG{+w}{ }\PYG{p}{\PYGZob{}}
+\PYG{+w}{        }\PYG{k}{return}\PYG{p}{;}
+\PYG{+w}{    }\PYG{p}{\PYGZcb{}}
+
+\PYG{+w}{    }\PYG{k+kt}{int}\PYG{+w}{ }\PYG{n}{col\PYGZus{}size}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{height}\PYG{+w}{ }\PYG{o}{*}\PYG{+w}{ }\PYG{n}{col\PYGZus{}w}\PYG{p}{;}
+
+\PYG{+w}{    }\PYG{c+c1}{// Column identifier}
+\PYG{+w}{    }\PYG{k+kt}{int}\PYG{+w}{ }\PYG{n}{col\PYGZus{}id}\PYG{+w}{  }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{tid}\PYG{+w}{ }\PYG{o}{/}\PYG{+w}{ }\PYG{n}{col\PYGZus{}size}\PYG{p}{;}
+
+\PYG{+w}{    }\PYG{c+c1}{// Thread id within column}
+\PYG{+w}{    }\PYG{k+kt}{int}\PYG{+w}{ }\PYG{n}{col\PYGZus{}tid}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{tid}\PYG{+w}{ }\PYG{o}{\PYGZpc{}}\PYG{+w}{ }\PYG{n}{col\PYGZus{}size}\PYG{p}{;}
+
+\PYG{+w}{    }\PYG{c+c1}{// Column offset}
+\PYG{+w}{    }\PYG{k+kt}{int}\PYG{+w}{ }\PYG{n}{col\PYGZus{}off}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{col\PYGZus{}id}\PYG{+w}{ }\PYG{o}{*}\PYG{+w}{ }\PYG{n}{col\PYGZus{}w}\PYG{p}{;}
+
+\PYG{+w}{    }\PYG{c+c1}{// True width of column}
+\PYG{+w}{    }\PYG{c+c1}{//}
+\PYG{+w}{    }\PYG{c+c1}{// int col\PYGZus{}tw  = col\PYGZus{}w;}
+\PYG{+w}{    }\PYG{c+c1}{// if (col\PYGZus{}id == width  / col\PYGZus{}w) \PYGZob{}}
+\PYG{+w}{    }\PYG{c+c1}{//     col\PYGZus{}tw  = width \PYGZhy{} col\PYGZus{}id * col\PYGZus{}w;}
+\PYG{+w}{    }\PYG{c+c1}{// \PYGZcb{}}
+\PYG{+w}{    }\PYG{c+c1}{//}
+\PYG{+w}{    }\PYG{c+c1}{// A shorter version of  the above since col\PYGZus{}tw is}
+\PYG{+w}{    }\PYG{c+c1}{// always bounded by col\PYGZus{}w. It removes the need of}
+\PYG{+w}{    }\PYG{c+c1}{// an expensive  divide operation  and saves 2 PTX}
+\PYG{+w}{    }\PYG{c+c1}{// instructions overal.}
+
+\PYG{+w}{    }\PYG{k+kt}{int}\PYG{+w}{ }\PYG{n}{col\PYGZus{}tw}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{min}\PYG{p}{(}\PYG{n}{width}\PYG{+w}{ }\PYG{o}{\PYGZhy{}}\PYG{+w}{ }\PYG{n}{col\PYGZus{}id}\PYG{+w}{ }\PYG{o}{*}\PYG{+w}{ }\PYG{n}{col\PYGZus{}w}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{col\PYGZus{}w}\PYG{p}{);}
+
+\PYG{+w}{    }\PYG{n}{x}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{p}{(}\PYG{n}{col\PYGZus{}tid}\PYG{+w}{ }\PYG{o}{\PYGZpc{}}\PYG{+w}{ }\PYG{n}{col\PYGZus{}tw}\PYG{p}{)}\PYG{+w}{ }\PYG{o}{+}\PYG{+w}{ }\PYG{n}{col\PYGZus{}off}\PYG{p}{;}
+\PYG{+w}{    }\PYG{n}{y}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{  }\PYG{n}{col\PYGZus{}tid}\PYG{+w}{ }\PYG{o}{/}\PYG{+w}{ }\PYG{n}{col\PYGZus{}tw}\PYG{p}{;}
+\PYG{+w}{    }\PYG{n}{tid}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{x}\PYG{+w}{ }\PYG{o}{+}\PYG{+w}{ }\PYG{p}{(}\PYG{n}{y}\PYG{+w}{ }\PYG{o}{*}\PYG{+w}{ }\PYG{n}{width}\PYG{p}{);}
+
+\PYG{+w}{    }\PYG{n}{do\PYGZus{}things\PYGZus{}with}\PYG{p}{(}\PYG{n}{tid}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{x}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{z}\PYG{p}{);}
+\PYG{p}{\PYGZcb{}}
+\end{Verbatim}

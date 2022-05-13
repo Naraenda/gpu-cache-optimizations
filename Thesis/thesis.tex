@@ -11,7 +11,7 @@
     decorations.markings,
     decorations.pathreplacing,
     patterns,
-    spy
+    spy,
     }
 \usepackage{float}
 \usepackage[framemethod=default]{mdframed}
@@ -19,9 +19,16 @@
 \usepackage{enumitem}
 \usepackage{xcolor}
 \usepackage{graphicx}
+
+% pgf plots and tables
+\usepackage{filecontents}
+\usepackage{colortbl}
+\usepackage{hhline}
 \usepackage{pgfplots}
-    \usepgfplotslibrary{colorbrewer}
-    \pgfplotsset{compat=1.18}
+\usepackage{pgfplotstable}
+\pgfplotsset{compat=1.18}
+
+% Minted for text
 \usepackage{minted}
     \setminted[haskell]{
         frame=lines,
@@ -33,7 +40,8 @@
         framesep=2mm,
         linenos
     }
-\usepackage{hhline}
+
+% Math symbols
 \usepackage{amsmath}
 \usepackage{amssymb}
 
@@ -43,6 +51,50 @@
 \newcommand{\floor}[1]{\left\lfloor #1 \right\rfloor}
 \newcommand{\ceil}[1]{\left\lceil #1 \right\rceil}
 \newrobustcmd*{\fsquare}[1]{\tikz{\filldraw[draw=#1,fill=#1] (0,0) rectangle (0.22cm,0.22cm);}}
+
+\pgfplotstableset{
+  /color cells/min/.initial=0,
+  /color cells/max/.initial=1000,
+  /color cells/textcolor/.initial=,
+  color cells/.style={
+    postproc cell content/.append code={%
+          \pgfkeys{/color cells/.cd,#1}%
+      \pgfkeysgetvalue{/pgfplots/table/@preprocessed cell content}\value%
+      \ifx\value\empty%
+      \else%
+        \pgfmathfloatparsenumber{\value}\pgfmathfloattofixed{\pgfmathresult}%
+        \let\value=\pgfmathresult%
+        \pgfplotscolormapaccess%
+            [\pgfkeysvalueof{/color cells/min}:\pgfkeysvalueof{/color cells/max}]%
+            {\value}{\pgfkeysvalueof{/pgfplots/colormap name}}%
+        \pgfkeysgetvalue{/pgfplots/table/@cell content}\typesetvalue%
+        \pgfkeysgetvalue{/color cells/textcolor}\textcolorvalue%
+        \toks0=\expandafter{\typesetvalue}%
+        \edef\temp{\noexpand\pgfkeyssetvalue{/pgfplots/table/@cell content}{%
+            \noexpand\cellcolor[rgb]{\pgfmathresult}%
+            \noexpand\definecolor{mapped color}{rgb}{\pgfmathresult}%
+            \ifx\textcolorvalue\empty\else\noexpand\color{\textcolorvalue}\fi%
+            \the\toks0%
+          }%
+        }%
+        \temp%
+      \fi%
+      }%
+  }%
+}%
+
+\pgfplotsset{
+    % this *defines* a custom colormap ...
+    colormap={viridis-light}{
+        rgb255=(33,145,140),
+        rgb255=(34,168,132),
+        rgb255=(68,191,112),
+        rgb255=(122,209,81),
+        rgb255=(189,223,38),
+        rgb255=(254,231,36),
+        rgb255=(255,255,255),
+    }
+}
 
 \tikzset{
     thread/.pic={

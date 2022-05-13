@@ -84,7 +84,7 @@ The naive implementation iterates over each of the outputs linearly, horizontall
 The temporal linearity translates to parallelism on GPUs where multiple threads work concurrently on each element of the output array.
 The naive implementation of the $5 \times 5$ box blur filter (equation \ref{eq:stencil_boxblur} and listing \ref{lst:stencil_usuage}) is compareable to the following naive CUDA C++ implementation (listing \ref{lst:stencil_cuda}).
 
-\begin{listing}[H]
+\begin{listing}[h]
     \begin{minted}{cuda}
 #define STENCIL_SIZE 5
 
@@ -115,8 +115,9 @@ __global__ void stencil_naive(float *output, float *input, int width, int height
 \end{listing}
 
 While the naive implementation of stencil operations works well enough when enough rows of the input fit in the cache, it begins to fall in performance on larger inputs.
+More specifically, inputs that are horizontally wide.
 
-\begin{table}[H]
+\begin{table}[h]
     \centering
     \begin{tabular}{|c c|}
         \hline
@@ -136,13 +137,23 @@ While the naive implementation of stencil operations works well enough when enou
 \end{table}
 
 % fig:st_stencil
-\begin{figure}[!hb]
+\begin{figure}[H]
     \centering
-    \begin{tikzpicture}
-        \node (image) at (0,0) {\includegraphics[width=0.4\textwidth]{st_diagrams/stencil7x7_linear.png}};
-        \draw [->] (image.south west) -- ++(2,0) node[right]{\footnotesize\textit{Time}};
-        \draw [->] (image.south west) -- ++(0,2) node[rotate=90, above]{\footnotesize\textit{Address}};
-    \end{tikzpicture}
+    \subfloat[On input sizes too wide (i.e. $16 \times 16$) cache trashing occurs.]{
+        \begin{tikzpicture}
+            \node (image) at (0,0) {\includegraphics[width=0.4\textwidth]{st_diagrams/stencil7x7_linear.png}};
+            \draw [->] (image.south west) -- ++(2,0) node[right]{\footnotesize\textit{Time}};
+            \draw [->] (image.south west) -- ++(0,2) node[rotate=90, above]{\footnotesize\textit{Address}};
+        \end{tikzpicture}
+    }
+    \qquad
+    \subfloat[The input size is modified to $8 \times 32$ which results in optimal cache utilization.]{
+        \begin{tikzpicture}
+            \node (image) at (0,0) {\includegraphics[width=0.4\textwidth]{st_diagrams/stencil7x7_linear_smaller_input.png}};
+            \draw [->] (image.south west) -- ++(2,0) node[right]{\footnotesize\textit{Time}};
+            \draw [->] (image.south west) -- ++(0,2) node[rotate=90, above]{\footnotesize\textit{Address}};
+        \end{tikzpicture}
+    }
     \caption{
         The spatial temporal diagram of a 7x7 stencil with linear ordering.
         See section \ref{sec:st_analysis}.

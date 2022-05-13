@@ -5,6 +5,7 @@ While tiling itself is a well-known optimization technique, we most consider the
 \TODO{\dots}
 
 \section{Theory}
+\label{sec:implementation_theory}
 
 In a sense, grouping columns is similar to striding clusters of data, except in the case when a row of work can't be perfectly strided.
 When the width of a multidimensional array is not a multiple of the stride, the loads will not align column wise (\TODO{figure}).
@@ -131,7 +132,7 @@ First, we calculate the offset for the starting index of the column we need to m
     o  &= \floor{\frac{i}{I_h w}} w
     \\ \intertext{Then, modify the width value such that the last column does not exceed the input width}
     w' &= \begin{cases}
-        ((I_w - 1) \bmod w) + 1& \text{if last column}
+        I_w - o& \text{if last column}
         \\
         w & \text{otherwise}
     \end{cases}
@@ -145,8 +146,6 @@ First, we calculate the offset for the starting index of the column we need to m
     \label{eq:column_mapping_to_j}
     j  &= x + y I_w + o
 \end{align}
-
-\TODO{should i add a figure showing the relation between the equation and the column pattern?}
 
 \TODO{What are the effects of GPU warps (32 threads) with this schedule?}
 
@@ -169,12 +168,60 @@ We modify equation \ref{eq:column_mapping_to_j}
 
 \subsection{Higher dimensions}
 
-\section{Implementation in Accelerate}
+\section{Implementation}
 
+The remapping algorithm described in section \ref{sec:implementation_theory} can be directly transcribed into C code (listing \ref{lst:column_cuda}).
+\begin{listing}[h]
+    \begin{minted}{cuda}
+__global__ void my_kernel(int width, [...]){
+    // For a given thread ID we can compute the 
+    // new thread ID and it's x, y position:
+    int tid = blockIdx.x * blockDim.x + threadIdx.x;
+    int x; // originally x = tid % width;
+    int y; // originally y = tid / width;
 
-\TODO{AAAAAAAAAAAA}
+    if (tid >= width * height) {
+        return;
+    }
 
+    int col_size = height * col_w;
 
+    // Column identifier
+    int col_id  = tid / col_size;
+
+    // Thread id within column
+    int col_tid = tid % col_size;
+
+    // Column offset
+    int col_off = col_id * col_w;
+
+    // True width of column
+    //
+    // int col_tw  = col_w;
+    // if (col_id == width  / col_w) {
+    //     col_tw  = width - col_id * col_w;
+    // }
+    //
+    // A shorter version of  the above since col_tw is 
+    // always bounded by col_w. It removes the need of 
+    // an expensive  divide operation  and saves 2 PTX
+    // instructions overal. 
+    
+    int col_tw = min(width - col_id * col_w, col_w);
+
+    x = (col_tid % col_tw) + col_off;
+    y =  col_tid / col_tw;
+    tid = x + (y * width);
+
+    do_things_with(tid, x, z);
+}
+    \end{minted}
+    \caption{
+        The CUDA C++ implementation column based remapping.
+    }
+    \label{lst:column_cuda}
+\end{listing}
+For the implementation in Accelerate, we first define the type signature of a thread id mapping function (listing {\ref{lst:threadmapping_type}}).
 \begin{listing}[!ht]
     \begin{minted}{haskell}    
 type ThreadMapping sh e arch 
@@ -183,9 +230,12 @@ type ThreadMapping sh e arch
     -> Operands Int 
     -> CodeGen arch (Operands Int)
     \end{minted}
+    \caption{
+        \TODO{caption}
+    }
     \label{lst:threadmapping_type}
 \end{listing}
-
+We then implement the algorithm as described in section \ref{sec:implementation_theory} (listing \ref{lst:column_mapping})
 \begin{listing}
     \begin{minted}{haskell}
 column :: Operands Int -> ThreadMapping sh e arch
@@ -224,6 +274,8 @@ column column_width shr sh index = do
     }
     \label{lst:column_mapping}
 \end{listing}
+However, in Accelerate a single thread can work on multiple elements if the work is larger than the maximum number of threads.
+Instead of computing the complete remap every new index, we can precompute part of the algorithm (listing \ref{lst:column_mapping_precompute}).
 
 \begin{listing}
     \begin{minted}{haskell}
@@ -435,7 +487,6 @@ The amount of fetches is similar to equation \ref{eq:stencil_tiling_fetches}, ho
 \end{equation}
 
 \TODO{Calculate column parameters, spatial temporal diagrams}
-
 
 \section{Matrix Multiplication}
 Matrix multiplication may benefit from a column based approach due to many vertical reads.

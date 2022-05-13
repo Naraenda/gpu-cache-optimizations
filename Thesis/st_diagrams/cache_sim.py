@@ -4,12 +4,12 @@ from functools import partial
 import numpy as np
 import itertools as iter
 
-CACHE_SIZE  = 32
+CACHE_SIZE  = 24
 CACHE_WIDTH = 4
 
 # Thread execution params
-WIDTH  = 16
-HEIGHT = 16
+WIDTH  = 8
+HEIGHT = 32
 
 def pattern_stencil(size):
     m = size // 2
@@ -65,13 +65,13 @@ def remap_tile(tile_size):
     return remap_internal
 
 #pattern = pattern_matrix_stencil(5)
-#pattern = pattern_stencil(7)
-pattern = pattern_matrix()
+pattern = pattern_stencil(7)
+#pattern = pattern_matrix()
 thread_ids = [(x, y) for y in range(HEIGHT) for x in range(WIDTH)]
 thread_count = len(thread_ids)
 
 #thread_ids = remap_tile(2)(thread_ids)
-thread_ids = remap_column(4)(thread_ids)
+#thread_ids = remap_column(4)(thread_ids)
 
 # Gather addresses
 def to_linear_space(x, y):

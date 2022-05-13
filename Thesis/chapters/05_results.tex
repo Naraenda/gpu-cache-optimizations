@@ -1,4 +1,147 @@
 \TODO{Benchmark results, Nvidia profiler statistics}
+\section{CUDA Benchmarks}
+
+We run the remapping on two simple CUDA programs: a $9 \times 9$ stencil operation on a $4096 \times 4096$ input, and a matrix multiplication on two $4096 \times 4096$ arrays.
+Interestingly the kernel execution time seems to be not correlated to our estimated column width at all, instead prefering lower multiple of 32 widths regardless of block size (figure \ref{fig:cuda_kernel_times}).
+The factor of 32 seems to be independent of input size and upholds during non power of 2 inputs (figure \ref{fig:cuda_kernel_time_stencil_no_pow2}).
+
+\begin{figure}[b]
+    \centering
+    \makebox[\textwidth][c] {
+        \subfloat[The execution time in milliseconds of a $9 \times 9$ stenciling kernel on a $4096 \times 4096$ input array with various column sizes and block sizes (prefixed with \textit{b}).]{
+            \centering
+            \pgfplotstabletypeset[col sep=comma,
+                /color cells/max=1.3,
+                /color cells/min=4.2,
+                /color cells/textcolor=black,
+                columns/b32/.style={color cells},
+                columns/b64/.style={color cells},
+                columns/b128/.style={color cells},
+                columns/b256/.style={color cells},
+                columns/b512/.style={color cells},
+                columns/b1024/.style={color cells},
+                columns/bench/.style={string type},
+                /pgfplots/colormap name=viridis-light]{kernel_time_stencil.csv}
+        }
+        \label{fig:cuda_kernel_time_stencil}
+        \qquad
+        \subfloat[The execution time in milliseconds of matrix multiplications on two $4096 \times 4096$ input arrays with various column sizes and block sizes (prefixed with \textit{b}).]{
+            \centering
+            \pgfplotstabletypeset[col sep=comma,
+                /color cells/max=1.7,
+                /color cells/min=4.2,
+                /color cells/textcolor=black,
+                columns/b32/.style={color cells},
+                columns/b64/.style={color cells},
+                columns/b128/.style={color cells},
+                columns/b256/.style={color cells},
+                columns/b512/.style={color cells},
+                columns/b1024/.style={color cells},
+                columns/bench/.style={string type},
+                /pgfplots/colormap name=viridis-light]{kernel_time_matrix.csv}
+        }
+    }
+    \label{fig:cuda_kernel_time_matrix}
+    \caption{
+        asda
+    }
+    \label{fig:cuda_kernel_times}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \pgfplotstabletypeset[col sep=comma,
+        /color cells/max=1.25,
+        /color cells/min=4.2,
+        /color cells/textcolor=black,
+        columns/b32/.style={color cells},
+        columns/b64/.style={color cells},
+        columns/b128/.style={color cells},
+        columns/b256/.style={color cells},
+        columns/b512/.style={color cells},
+        columns/b1024/.style={color cells},
+        columns/bench/.style={string type},
+        /pgfplots/colormap name=viridis-light]{kernel_time_stencil_4037.csv}
+    \caption{The execution time in milliseconds of a $9 \times 9$ stenciling kernel on a $4037 \times 4037$ input array with various column sizes and block sizes (prefixed with \textit{b}). Even on non power of two's, column widths of multiples of 32 produce more optimal results.}
+    \label{fig:cuda_kernel_time_stencil_no_pow2}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \begin{tikzpicture}
+        \begin{axis}[
+            xlabel = Input Size,
+            ylabel = Execution time compared to naive,
+            xmode = log,
+            ymajorgrids,
+            %log ticks with fixed point,
+            log basis x={2},
+            xmin=128,
+            xmax=8192,
+            xtick={128,256,512,1024,2048,4096,8192},
+            colormap name=viridis,
+            cycle list={[colors of colormap={0, 150,..., 1000}]},
+            every axis plot/.append style={thick},
+            legend pos=north west,
+            height=10cm,
+        ]
+            \addplot[mark=none, black, samples=2, domain=128:8192] {1};
+            \addlegendentry{Naive}
+            \addlegendimage{empty legend}
+            \addlegendentry[yshift=10pt]{\textbf{Column}}
+            \pgfplotsinvokeforeach{32, 64, 128, 256, 512, 1024, 2048} {
+                \addplot table[
+                    x = size,
+                    y expr  = \thisrow{c#1}/\thisrow{c0},
+                    col sep = comma,
+                ]{kernel_time_vs_input_stencil.csv};
+                \addlegendentry{#1}
+            }
+        \end{axis}
+    \end{tikzpicture}
+    \caption{
+        The relative kernel execution time of various column widths compared to the naive implementation for a $9 \times 9$ stencil operation on an $N \times N$ matrix. Lower is better.
+    }
+\end{figure}
+
+\begin{figure}
+    \centering
+    \begin{tikzpicture}
+        \begin{axis}[
+            xlabel = Input Size,
+            ylabel = Execution time compared to naive,
+            xmode = log,
+            ymajorgrids,
+            %log ticks with fixed point,
+            log basis x={2},
+            xmin=128,
+            xmax=2048,
+            xtick={128,256,512,1024,2048},
+            colormap name=viridis,
+            cycle list={[colors of colormap={0, 150,..., 1000}]},
+            every axis plot/.append style={thick},
+            legend pos=south west,
+            height=10cm,
+        ]
+            \addplot[mark=none, black, samples=2, domain=128:8192] {1};
+            \addlegendentry{Naive}
+            \addlegendimage{empty legend}
+            \addlegendentry[yshift=10pt]{\textbf{Column}}
+            \pgfplotsinvokeforeach{32, 64, 128, 256, 512, 1024, 2048} {
+                \addplot table[
+                    x = size,
+                    y expr  = \thisrow{c#1}/\thisrow{c0},
+                    col sep = comma,
+                ]{kernel_time_vs_input_matrix.csv};
+                \addlegendentry{#1}
+            }
+        \end{axis}
+    \end{tikzpicture}
+    \caption{
+        The relative kernel execution time of various column widths compared to the naive implementation for the matrix multiplication of two $N \times N$ matrices. Lower is better.
+    }
+\end{figure}
+
 \section{Execution Times}
 \section{Cache Hitrate}
 \section{Hardware Utilization}
