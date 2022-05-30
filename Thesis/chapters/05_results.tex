@@ -1,9 +1,12 @@
 \TODO{Benchmark results, Nvidia profiler statistics}
 \section{CUDA Benchmarks}
 
-We run the remapping on two simple CUDA programs: a $9 \times 9$ stencil operation on a $4096 \times 4096$ input, and a matrix multiplication on two $4096 \times 4096$ arrays.
-Interestingly the kernel execution time seems to be not correlated to our estimated column width at all, instead prefering lower multiple of 32 widths regardless of block size (figure \ref{fig:cuda_kernel_times}).
+We run the remapping on two simple CUDA programs: a $9 \times 9$ stencil operation on a $4096 \times 4096$ input, and a matrix multiplication on two $4096 \times 4096$ arrays of 32-bit floating point numbers.
+Contrary to our expectations, the kernel execution time seems to be not correlated to our estimated column width at all, instead prefering lower multiple of 32 widths regardless of block size (figure \ref{fig:cuda_kernel_times}).
 The factor of 32 seems to be independent of input size and upholds during non power of 2 inputs (figure \ref{fig:cuda_kernel_time_stencil_no_pow2}).
+Changing the data type to half precision (16-bit) floating points had effect on the overal improvements.
+Using 64-bit double precision floating points made the kernel compute bound instead of memory bound and therefore no tangible difference between the naive implementation and any column remapping is observed.
+This exeggerates our earlier assumption (section \ref{sec:implementation_theory}) that the 32 thread wide warps might play a role.
 
 \begin{figure}[b]
     \centering

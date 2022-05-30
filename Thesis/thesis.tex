@@ -127,6 +127,15 @@
     }
 }
 
+\tikzset{
+    sm_warp/.pic={
+        \draw (0,  0  ) rectangle +(2, -1.0) node[pos=.5,align=center] {Warp\\Scheduler};
+        \draw (0, -1  ) rectangle +(2, -0.5) node[pos=.5] {$16\times$FP32};
+        \draw (0, -1.5) rectangle +(2, -0.5) node[pos=.5] { $8\times$FP64};
+        \draw (0, -2  ) rectangle +(2, -0.5) node[pos=.5] {$16\times$INT32};
+    }
+}
+
 \title{Improving Performance in Structured GPGPU Workloads via Specialized Thread Schedules}
 \author{Naraenda Prasetya}
 \date{2022}

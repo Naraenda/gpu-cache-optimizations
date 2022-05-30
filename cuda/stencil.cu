@@ -82,6 +82,29 @@ __global__ void stencil_column(T *output, T *input, int width, int height, int N
 }
 
 template <typename T>
+__global__ void stencil_tile(T *output, T *input, int width, int height, int N {
+    int x = blockIdx.x * blockDim.x + threadIdx.x;
+    int y = blockIdx.y * blockDim.y + threadIdx.y;
+    
+    if (x >= width || y >= height) {
+        return;
+    }
+
+    int tid = y * width + x;
+
+    T result = 0;
+    for (int d_i = -STENCIL_SIZE/2; d_i <= STENCIL_SIZE/2; d_i++) {
+        int i = min(height-1, max(0, y + d_i));
+        for (int d_j = -STENCIL_SIZE/2; d_j <= STENCIL_SIZE/2; d_j++) {
+            int j = min(width-1, max(0, x + d_j));
+            result += input[i * width + j];
+        }
+    }
+    output[tid] = result / static_cast<T>(STENCIL_SIZE * STENCIL_SIZE);
+
+}
+
+template <typename T>
 void benchmark(int N, int bench_count, int block_size, int column_width, int size) {
 
     // Host Memory

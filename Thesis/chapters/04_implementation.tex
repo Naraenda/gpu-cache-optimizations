@@ -149,8 +149,8 @@ First, we calculate the offset for the starting index of the column we need to m
 
 \TODO{What are the effects of GPU warps (32 threads) with this schedule?}
 
-On GPUs threads are batched in batches of 32 threads.
-Therefore, increasing spatial locality between neighbouring threads can improve performance.
+On GPUs threads in threadblocks are batched in warps of 32 threads and these warps may be executed in an arbitrary order (\TODO{ref back to earlier sec}).
+As a result we might not be able to exploit the cache as much since column orders are highly dependent on thread order.
 
 \subsection{Zigzagging variation}
 

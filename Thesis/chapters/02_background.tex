@@ -11,68 +11,31 @@ This is normally done with CUDA C++, an extension on C++ programming language, b
 On modern Nvidia GPU architectures the compute units are grouped in graphics processing clusters (GPC).
 Since GPUs are primarily used in graphics applications, the GPC contains some specialized components: a raster engine, Texture Processing Clusters (TPCs), \TODO{\dots}.
 The main point of interest are streaming multiprocessors (SMs) in the TPCs.
-Each SMs has its own instruction scheduler and various execution pipelines.
-\citeauthor{jia2019dissecting} suggests that a threadblock should contain at least 128 threads due to SMs on Turing, Volta, and Ampere being split into four processing blocks \cite{jia2019dissecting,nvidia2017volta,nvidia2018turing,nvidia2020ampere}.
-
-\TODO{Link text with sketch}
-
-\begin{figure}[!hb]
-    \centering
-    \includegraphics[width=8cm]{sketches/ampere_arch.png}
-    \caption{
-        Ampere sketch.
-    }
-\end{figure}
-
-\TODO{Define + summerize architectures}
-\TODO{More specific + figure}
-
-\subsection{Software}
-Executions on a GPU are directed on both the host and device (GPU).
-\textit{Kernels} define the functions that should be executed on the GPU.
-The host side controls how these kernels should be executed, namely how the threads should be launched and executed.
-Threads are grouped and defined on a 2 level hierarchy: threads are grouped together in \textit{cooperative thread arrays} (CTAs), also known as thread blocks, and multiple CTAs can be queued for the execution of a single kernel.
-Both can be controlled upon executing a kernel: the amount of threads per CTA (threadblock size) and the total amount of CTAs (gridsize).
-CTAs get assigned to SMs in an arbitrary manner.
-
-When an SM executes a CTA, it splits the work into warps, a grouping of 32-threads.
-On architecture before Volta, a single warp is executed in a single instruction, multiple threads fashion, where a single program counter is shared amongst the 32 threads.
-With the volta architecture, independent thread scheduling allows full concurency between threads and the scheduler can group multiple threads into SIMT units.
-
-\TODO{SM can context switch between multipel warps to hide latency}
-
-\TODO{Figure visualizing the whole thing because text is confusing... probably}
-
-% random sketch
-\begin{figure}[!hb]
-    \centering
-    \begin{tikzpicture}
-        \pic at (0, 0) {thread};
-        \pic at (2, 0) {threadblock};
-        \pic at (5, 0) {warp};
-    \end{tikzpicture}
-    \caption{
-        \TODO{remove this, only used to debug tikz pic codes}
-    }
-\end{figure}
-
+Each SM has its own scheduler and various execution pipelines (single and double precision computation, integer computation, etc.).
+On the Turing, Volta and Ampera architectures each SM has 4 warp schedulures and the accompanying pipelines and therefore \citeauthor{jia2019dissecting} suggests that a threadblock should contain at least 128 threads due to SMs on Turing, Volta, and Ampere being split into four processing blocks so at least all 4 schedulures can be completely utilized. \cite{jia2019dissecting,nvidia2017volta,nvidia2018turing,nvidia2020ampere}.
+The L1 cache is local to each SM, while the L2 cache is shared across SMs.
 
 \begin{figure}[!hb]
     \centering
-    \begin{tikzpicture}
-        \node at (1, 1.5) {threadblock size};
-        \draw[decorate, thick, decoration={brace}] (0,1.1) --  (2,1.1);
+    \begin{tikzpicture} 
+        \foreach \x in {0,1,2,3} {
+            \draw (\x*2, 0) rectangle +(1.5, 0.5) node[pos=.5] {Memory};
+            \draw[<->] (\x*2+0.75, 0) -- +(0, -0.5);
+        }
+        \draw (0, -1) rectangle +(7.5, 0.5) node[pos=.5] {L2 Cache};
+
+        \draw[<->] (2, -1) -- +(0, -0.75);
+
+        \draw (0, -1.5) rectangle +(3.25, -3.75);
+        \draw (1, -1.75) rectangle +(2, -0.5) node[pos=.5] {L1 Cache};
         
-
-        \node [rotate=90] at (-0.5, -1) {grid size};
-        \draw[decorate, thick, decoration={brace}] (-0.1,-3.2) --  (-0.1,1);
-
-        \pic at (0, 0) {threadblock};
-        \pic at (0, -1.1) {threadblock};
-        \pic at (0, -3.2) {threadblock};
+        \pic [local bounding box=sm_warp] at (1, -2.5) {sm_warp};
+        \node[left of=sm_warp, xshift=-4mm] {$4\times$};
+        \node at (0.5, -1.75) {SM};
+        \node[scale=2] at (5, -3.25)  {\dots\dots};
     \end{tikzpicture}
     \caption{
-        \TODO{host side workload assignment}
+        An overview of the memory hierarchy of the Ampere architecture. The L1 Cache is local to the SM which executes can 4 warps simultaneously 
     }
 \end{figure}
 
@@ -139,6 +102,55 @@ In both cases it is up to the compiler and programmer to exploit this for extra 
     }
 \end{table}
 
+\subsection{Software}
+Executions on a GPU are directed on both the host and device (GPU).
+\textit{Kernels} define the functions that should be executed on the GPU.
+The host side controls how these kernels should be executed, namely how the threads should be launched and executed.
+Threads are grouped and defined on a 2 level hierarchy: threads are grouped together in \textit{cooperative thread arrays} (CTAs), also known as thread blocks, and multiple CTAs can be queued for the execution of a single kernel.
+Both can be controlled upon executing a kernel: the amount of threads per CTA (threadblock size) and the total amount of CTAs (gridsize).
+CTAs get assigned to SMs in an arbitrary manner.
+
+When an SM executes a CTA, it splits the work into warps, a grouping of 32-threads.
+On architecture before Volta, a single warp is executed in a single instruction, multiple threads fashion, where a single program counter is shared amongst the 32 threads.
+With the volta architecture, independent thread scheduling allows full concurency between threads and the scheduler can group multiple threads into SIMT units.
+
+\TODO{SM can context switch between multipel warps to hide latency}
+
+\TODO{Figure visualizing the whole thing because text is confusing... probably}
+
+% random sketch
+\begin{figure}[!hb]
+    \centering
+    \begin{tikzpicture}
+        \pic at (0, 0) {thread};
+        \pic at (2, 0) {threadblock};
+        \pic at (5, 0) {warp};
+    \end{tikzpicture}
+    \caption{
+        \TODO{remove this, only used to debug tikz pic codes}
+    }
+\end{figure}
+
+
+\begin{figure}[!hb]
+    \centering
+    \begin{tikzpicture}
+        \node at (1, 1.5) {threadblock size};
+        \draw[decorate, thick, decoration={brace}] (0,1.1) --  (2,1.1);
+        
+
+        \node [rotate=90] at (-0.5, -1) {grid size};
+        \draw[decorate, thick, decoration={brace}] (-0.1,-3.2) --  (-0.1,1);
+
+        \pic at (0, 0) {threadblock};
+        \pic at (0, -1.1) {threadblock};
+        \pic at (0, -3.2) {threadblock};
+    \end{tikzpicture}
+    \caption{
+        \TODO{host side workload assignment}
+    }
+\end{figure}
+
 \subsection{Performance of Access Patterns}
 \citeauthor{lam1991cache} and \citeauthor{meyer2003algorithms} describe two types of reference reuse\cite{lam1991cache, meyer2003algorithms}:
 \begin{itemize}
@@ -196,7 +208,22 @@ Self interference extends this by taking the cache locations of variables into a
 \cite{lam1991cache}
 
 \subsection{CTA Clustering}
-\TODO{Write}
+\citeauthor{li2017locality} presented a clustering algorithm for reorder threads to improve cache performance on GPU.
+It replaces a kernel with a new one with predefined clustering rules.
+CTAs with inter-CTA locality are clustered together which can then be assigned to SMs.
+The work in these clusters can be bounded to SMs in two ways:
+Round-Robin Binding which asumes the scheduler assigns CTAs to SMs in a strict Round Robin policy, and SM-based binding which extracts the current executing SM for a CTA which it uses to devide the work it will do.
+The former results in redirection based clustering while the latter forms agent based clustering.
+
+Additionally, \citeauthor{li2017locality} implemented three optimizations into their clustering framework: 
+\textbf{i) CTA Throttling} which limits the number of concurrent CTAs on an SM to reduce resource contention.
+\textbf{ii) Cache Bypassing} to avoid unnecessary cache pollution.
+\textbf{iii) CTA Prefetching using Reshaped Order}
+
+CTA clustering observed no significant speedup for normal and dense matrix multiplications.
+For convolutional neural networks (similar memory access patterns as stencils), a $1.4\times$ speedup was observed for redirection based clustering, and a $1.2\times$ speedup for other clustering algorithms of the fermi architecture.
+However, on the Pascal architecture, convolutional neural networks no speedup was observed, and on Maxwell and Kepler this improvement is limited to $1.1\times$.
 
 \subsection{PAVER}
+PAVER is very cool agent based clustering algorithm
 \TODO{wRITE}
