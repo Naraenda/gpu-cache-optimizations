@@ -1,19 +1,15 @@
-
 \section{GPU Architecture}
-Since the GPU backend of Accelerate only works with CUDA capable devices (see section \ref{sec:accelerate}), we will mostly focus on the architecture of newer NVidia GPUs.
-Massive parallel workloads are executed on numerous cores clustered in streaming multiprocessors (SMs).
-The memory is structured in a multi-level hierarchy containing an L1 cache for each SM, a shared L2 cache for all SMs and multiple banks of DRAM \cite{nvidia2017volta,nvidia2020ampere}.
-
-When working with CUDA the programmer defines a kernel.
-This is normally done with CUDA C++, an extension on C++ programming language, but in our case Accelerate will handle the generation of kernels (section \ref{sec:accelerate}) \cite{nvidia2021cudadocs}.
+The GPU backend of Accelerate only works with CUDA capable devices (see section \ref{sec:accelerate}).
+Therefore, we will mostly focus on the architecture of newer Nvidia GPUs.
 
 \subsection{Hardware}
-On modern Nvidia GPU architectures the compute units are grouped in graphics processing clusters (GPC).
-Since GPUs are primarily used in graphics applications, the GPC contains some specialized components: a raster engine, Texture Processing Clusters (TPCs), \TODO{\dots}.
-The main point of interest are streaming multiprocessors (SMs) in the TPCs.
-Each SM has its own scheduler and various execution pipelines (single and double precision computation, integer computation, etc.).
+On modern Nvidia GPU architectures is composed of multiple GPU Processing Clusters (GPCs), Texture Processing Clusters (TPCs), Streaming Multiprocessors (SMs) and memory controllers.
+The main point of interest are the streaming multiprocessors which handle the data processing.
+The GPU uses a single instruction multiple threads (SIMT) execution model, and the scheduler in each SM dispatches instructions to multiple cores to the various specialized cores for each of the various execution pipelines (single and double precision computation, integer computation, etc.).
+
 On the Turing, Volta and Ampera architectures each SM has 4 warp schedulures and the accompanying pipelines and therefore \citeauthor{jia2019dissecting} suggests that a threadblock should contain at least 128 threads due to SMs on Turing, Volta, and Ampere being split into four processing blocks so at least all 4 schedulures can be completely utilized. \cite{jia2019dissecting,nvidia2017volta,nvidia2018turing,nvidia2020ampere}.
-The L1 cache is local to each SM, while the L2 cache is shared across SMs.
+The memory is structured in a multi-level hierarchy containing an L1 cache for each SM, a shared L2 cache for all SMs and multiple banks of DRAM \cite{nvidia2017volta,nvidia2020ampere} (figure \ref{fig:ampere_architecture}).
+Data can be shared between threads in the same CTA, and therefore on the same SM, via the L1 cache and between all threads via L2 cache.
 
 \begin{figure}[!hb]
     \centering
@@ -37,7 +33,11 @@ The L1 cache is local to each SM, while the L2 cache is shared across SMs.
     \caption{
         An overview of the memory hierarchy of the Ampere architecture. The L1 Cache is local to the SM which executes can 4 warps simultaneously 
     }
+    \label{fig:ampere_architecture}
 \end{figure}
+
+Aside from the L1 and L2 caches, GPUs also use a translation lookaside buffer (TLB) which caches recent translations from virtual address space to physical address space.
+\TODO{Explain virtual vs physical memory space}
 
 \subsection{GPU Caches}
 \label{sec:cache_gpu}
@@ -62,6 +62,11 @@ An LRU eviction policy evicts data that is the least recently used.
 \citeauthor{jia2019dissecting} conclude that newer architectures (Turing, Volta) uses a non-LRU eviction policy \cite{jia2019dissecting, jia2018dissecting,mei2016dissecting}.
 When the L1 cache in Turing and Volta GPU saturates, 4 consecutive cache lines are chosen randomly to be evicted.
 This is in line with a new eviction policy mechanism introduced with Volta, where cache lines can be assigned a priority \cite{jia2019dissecting,nvidia2021cudadocs}.
+
+On the Turing architecture \citeauthor{jia2019dissecting} has found with the p-chase benchmark that the memory access latancy for a L2 cache miss and TLB miss to be 616 cycles.
+On a L1 cache hit (best case scenario) the latency is 32 cycles.
+For a L2 cache hit this rises to a latency of 188 cycles.
+With L2 miss but a TLB hit the latency becomes 296 cycles.
 
 Modern Nvidia GPUs are able to handle various types cache operations and eviction hints.
 By default, loads are cached at all levels (L2, L1) with an LRU policy.
@@ -95,6 +100,17 @@ In both cases it is up to the compiler and programmer to exploit this for extra 
         \\
         & Line size  & B &        64 &        64 &     32 &      32
         \\
+        \hline
+        L1 TLB%
+        & Coverage   & MiB &      32 &        32 &   \~32 &     \~2
+        \\
+        & Page entry & KiB &    2048 &    2048   &   2048 &     128
+        \\
+        \hline
+        L2 TLB%
+        & Coverage   & MiB &  \~8192 &  \~8192   & \~2048 &   \~128
+        \\
+        & Page entry & MiB &      32 &      32   &     32 &       2
     \end{tabular}
     \caption{
         Summary of the cache specification on various Nvidia GPUs and architectures. 
@@ -103,6 +119,9 @@ In both cases it is up to the compiler and programmer to exploit this for extra 
 \end{table}
 
 \subsection{Software}
+When working with CUDA the programmer defines a kernel.
+This is normally done with CUDA C++, an extension on C++ programming language, but in our case Accelerate will handle the generation of kernels (section \ref{sec:accelerate}) \cite{nvidia2021cudadocs}.
+
 Executions on a GPU are directed on both the host and device (GPU).
 \textit{Kernels} define the functions that should be executed on the GPU.
 The host side controls how these kernels should be executed, namely how the threads should be launched and executed.
@@ -119,17 +138,17 @@ With the volta architecture, independent thread scheduling allows full concurenc
 \TODO{Figure visualizing the whole thing because text is confusing... probably}
 
 % random sketch
-\begin{figure}[!hb]
-    \centering
-    \begin{tikzpicture}
-        \pic at (0, 0) {thread};
-        \pic at (2, 0) {threadblock};
-        \pic at (5, 0) {warp};
-    \end{tikzpicture}
-    \caption{
-        \TODO{remove this, only used to debug tikz pic codes}
-    }
-\end{figure}
+%\begin{figure}[!hb]
+%    \centering
+%    \begin{tikzpicture}
+%        \pic at (0, 0) {thread};
+%        \pic at (2, 0) {threadblock};
+%        \pic at (5, 0) {warp};
+%    \end{tikzpicture}
+%    \caption{
+%        \TODO{remove this, only used to debug tikz pic codes}
+%    }
+%\end{figure}
 
 
 \begin{figure}[!hb]
@@ -144,10 +163,12 @@ With the volta architecture, independent thread scheduling allows full concurenc
 
         \pic at (0, 0) {threadblock};
         \pic at (0, -1.1) {threadblock};
+        
+        \node[scale=2, rotate=90] at (1, -1.6)  {\dots};
         \pic at (0, -3.2) {threadblock};
     \end{tikzpicture}
     \caption{
-        \TODO{host side workload assignment}
+        GPU workloads are defined by the threadblock size and grid size.
     }
 \end{figure}
 
