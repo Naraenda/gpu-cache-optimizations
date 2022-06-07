@@ -3,6 +3,10 @@
 #include <iostream>
 #include <cuda_fp16.h>
 
+#include <cuda_runtime.h>
+#include "cublas_v2.h"
+#define IDX2C(i,j,ld) (((j)*(ld))+(i))
+
 #define SIZE  1024
 
 template <typename T>
@@ -66,6 +70,20 @@ __global__ void matrix_column(T *o, T *a, T *b, int depth, int width, int height
     
 }
 
+void matrix_cublas(float *o, float *a, float *b, int size) {
+    cublasHandle_t handle;
+    
+    cublasStatus_t stat;
+    float alpha = 1.0f;
+    float beta  = 0.0f;
+    cublasCreate(&handle);
+    stat = cublasSgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, size, size, size, &alpha, a, size, b, size, &beta, o, size);
+    if (stat != CUBLAS_STATUS_SUCCESS) {
+        printf("cublasSgemm failed");
+    }
+    cublasDestroy(handle);
+}
+
 template <typename T>
 void benchmark(int bench_count, int block_size, int column_width, int size) {
     int N = size * size;
@@ -111,11 +129,16 @@ void benchmark(int bench_count, int block_size, int column_width, int size) {
         //cudaMemcpy(d_a, h_a, sizeof(float) * N, cudaMemcpyHostToDevice);
         
         cudaEventRecord(gpu_start);
-        if (column_width > 0) {
-            matrix_column<T><<<block_count, block_size>>>(d_o, d_a, d_b, size, size, size, column_width);
-        } else {
+        if (column_width == -1) {
+            matrix_cublas(d_o, d_a, d_b, size);
+        } else if (column_width == 0) {
             matrix_naive<T><<<block_count, block_size>>>(d_o, d_a, d_b, size, size, size);
+        } else {
+            matrix_column<T><<<block_count, block_size>>>(d_o, d_a, d_b, size, size, size, column_width);
         }
+        
+        // CUBLAS:
+
         cudaEventRecord(gpu_stop);
         
         cudaEventSynchronize(gpu_stop);
@@ -145,7 +168,7 @@ int main(int argc, char *argv[]) {
     int l1_size = 64 * 1024;
     int l2_size = 0;
     cudaDeviceGetAttribute(&l2_size, cudaDevAttrL2CacheSize, 0);    
-    int bench_count = 100;
+    int bench_count = 1;
 
     bool run_naive = false;
 

@@ -44,13 +44,12 @@ Aside from the L1 and L2 caches, GPUs also use a translation lookaside buffer (T
 To the programmer, the memory hierarchy is very simplified: there is the compute unit and the memory.
 Caches are hidden from this model as on most architectures they are managed by hardware.
 
-Memory can become a significant bottleneck due to the large amount of threads running concurrently.
-Caches can alleviate this but are limited in size, and given a large enough problem can cause cache trashing -- the premature eviction of data before any significant reuse \cite{dai2016model}.
-To improve efficiency of caches, caches asume spatial locality via cache lines.
-A cache line is the smallest unit of data that a cache can hold.
-For example, an L1 cache on a Turing GPU uses cache lines that hold 128 bytes of data.
-Therefore, fetching data from memory also brings extra nearby data with it.
-
+Memory can become a significant bottleneck due to the large amount of threads running concurrently and the amount of data each thread processes.
+Caches are much faster than memory and are often on the same chip as the compute unit.
+However, they are limited in size, and given a large enough problem can cause cache trashing -- the premature eviction of data before any significant reuse \cite{dai2016model}.
+To improve the efficiency of caches, caches asume spatial locality via cache lines.
+A cache line is the smallest unit of data that a cache can hold, and fetching data from memory also brings extra nearby data with it.
+The L1 cache on a Turing GPU (and most other modern architectures) uses 128 byte cachelines which plays well with the 32-thread warp size since executing a fetch for a single precision floating point takes $32 \times 4 = 128$ bytes which can fit in a single cache line.
 Data shared between threads through the cache can happen in a read-after-write (RAW) or read-after-read (RAR) manner.
 RAW has data dependency between tasks, for example in scan operations.
 RAR has no data dependency and can be executed in any order \cite{tripathy2021paver}.
@@ -58,12 +57,15 @@ RAR has no data dependency and can be executed in any order \cite{tripathy2021pa
 The L1 cache in older Nvidia GPU architectures (Maxwell, Pascal) uses the least recently used (LRU) eviction policy.
 When caches become full, we need to remove data (a cache line) from the cache to allow newer data to be cached.
 An LRU eviction policy evicts data that is the least recently used.
+\citet{mei2016dissecting} presented a novel fine-grained pointer chasing (P-chase) microbenchmark to explore unknown GPU cache parameters.
+P-chase defines an array of indices where each element points to the next index to fetch from the array, thus chasing the pointer.
+
 \citet{jia2019dissecting} have shown that in Turing and Volta GPUs, the P-chase benchmark that is used to detect the LRU eviction policy presented by \citet{mei2016dissecting} fails to complete over the full L1 cache.
 \citeauthor{jia2019dissecting} conclude that newer architectures (Turing, Volta) uses a non-LRU eviction policy \cite{jia2019dissecting, jia2018dissecting,mei2016dissecting}.
 When the L1 cache in Turing and Volta GPU saturates, 4 consecutive cache lines are chosen randomly to be evicted.
 This is in line with a new eviction policy mechanism introduced with Volta, where cache lines can be assigned a priority \cite{jia2019dissecting,nvidia2021cudadocs}.
 
-On the Turing architecture \citeauthor{jia2019dissecting} has found with the p-chase benchmark that the memory access latancy for a L2 cache miss and TLB miss to be 616 cycles.
+On the Turing architecture \citeauthor{jia2019dissecting} has found with the P-chase benchmark that the memory access latancy for a L2 cache miss and TLB miss to be 616 cycles.
 On a L1 cache hit (best case scenario) the latency is 32 cycles.
 For a L2 cache hit this rises to a latency of 188 cycles.
 With L2 miss but a TLB hit the latency becomes 296 cycles.
@@ -194,6 +196,8 @@ With missrate being
     M(v) = 1 \left(1 - S(v)\right) \prod_{u\in V - \{v\}}\left(1 - F(u)\right)
 \]
 $F(u)$ is defined as the fraction of cache used by variable $u$, and self interference $S(v)$ is defined to be the fraction of accesses that map to non-unique location in the cache.
+In the context of blocking, the largest block size where no self-interference occurs is called the critical blocking factor.
+From \citeauthor{lam1991cache}'s observations with matrix multiplications, the total amount of cache misses gradually declines with larger block sizes until the critical blocking factor is reached.
 
 \TODO{Illustrations for interference}
 

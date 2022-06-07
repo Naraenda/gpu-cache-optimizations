@@ -2,6 +2,7 @@ import subprocess
 from typing import List
 
 COLUMN_VALUES = [
+    -1,
     0,
     #4,
     #8,
@@ -13,7 +14,7 @@ COLUMN_VALUES = [
     #34,
     #48,
     64,
-    96,
+    #96,
     128,
     256,
     512,
@@ -40,9 +41,9 @@ INPUT_SIZES = [
     #8192,
 ]
 
-print('# Compile')
+#print('# Compile')
 #subprocess.run('nvcc stencil.cu -arch=sm_72')
-subprocess.run('nvcc matrix.cu -arch=sm_72')
+#subprocess.run('nvcc matrix.cu -arch=sm_72')
 
 def colval_vs_blocksize():
     summary = ['bench']
@@ -92,6 +93,10 @@ def colval_vs_input():
                 res = f'{n:5} {data[5].strip()}'
                 cur_avg = float(list(x for x in res.split(' ') if x != '')[7].strip('ms'))
                 avg = min(avg, cur_avg)
+
+                # break if cuBLAS
+                if i == -1:
+                    break
             summary.append(f',\t{avg:4}')
         summary.append('\n')
 

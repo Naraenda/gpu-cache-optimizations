@@ -1,12 +1,9 @@
 \TODO{Benchmark results, Nvidia profiler statistics}
 \section{CUDA Benchmarks}
 
-We run the remapping on two simple CUDA programs: a $9 \times 9$ stencil operation on a $4096 \times 4096$ input, and a matrix multiplication on two $4096 \times 4096$ arrays of 32-bit floating point numbers.
+We run the remapping on two simple CUDA programs: a $9 \times 9$ stencil operation on a $4096 \times 4096$ input, and a matrix multiplication on two $1024 \times 1024$ arrays of 32-bit floating point numbers.
+The kernel is analyzed with Nvidia profiler (\texttt{nvprof}) and Nvidia Nsight Compute CLI (\texttt{ncu}).
 Contrary to our expectations, the kernel execution time seems to be not correlated to our estimated column width at all, instead prefering lower multiple of 32 widths regardless of block size (figure \ref{fig:cuda_kernel_times}).
-The factor of 32 seems to be independent of input size and upholds during non power of 2 inputs (figure \ref{fig:cuda_kernel_time_stencil_no_pow2}).
-Changing the data type to half precision (16-bit) floating points had effect on the overal improvements.
-Using 64-bit double precision floating points made the kernel compute bound instead of memory bound and therefore no tangible difference between the naive implementation and any column remapping is observed.
-This exeggerates our earlier assumption (section \ref{sec:implementation_theory}) that the 32 thread wide warps might play a role.
 
 \begin{figure}[b]
     \centering
@@ -28,7 +25,7 @@ This exeggerates our earlier assumption (section \ref{sec:implementation_theory}
         }
         \label{fig:cuda_kernel_time_stencil}
         \qquad
-        \subfloat[The execution time in milliseconds of matrix multiplications on two $4096 \times 4096$ input arrays with various column sizes and block sizes (prefixed with \textit{b}).]{
+        \subfloat[The execution time in milliseconds of matrix multiplications on two $1024 \times 1024$ input arrays with various column sizes and block sizes (prefixed with \textit{b}).]{
             \centering
             \pgfplotstabletypeset[col sep=comma,
                 /color cells/max=1.7,
@@ -50,6 +47,11 @@ This exeggerates our earlier assumption (section \ref{sec:implementation_theory}
     }
     \label{fig:cuda_kernel_times}
 \end{figure}
+
+The factor of 32 seems to be independent of input size and upholds during non power of 2 inputs (figure \ref{fig:cuda_kernel_time_stencil_no_pow2}).
+Changing the data type to half precision (16-bit) floating points had effect on the overal improvements.
+Using 64-bit double precision floating points made the kernel compute bound instead of memory bound and therefore no tangible difference between the naive implementation and any column remapping is observed.
+This exeggerates our earlier assumption (section \ref{sec:implementation_theory}) that the 32 thread wide warps might play a role.
 
 \begin{figure}
     \centering
@@ -145,6 +147,10 @@ This exeggerates our earlier assumption (section \ref{sec:implementation_theory}
     }
 \end{figure}
 
-\section{Execution Times}
-\section{Cache Hitrate}
 \section{Hardware Utilization}
+On the $1024 \times 1024$ matrix multiplication, running a 32 wide column patterns resulted in an improvement to the L1 cache hit rate from 19.49\% to 77.40\%.
+This results in a drop in transferred data from L2 to L1 cache from 4.02 GB to 1.13 GB. 
+The L2 hit rate dropped from 98.52\% in the naive case to 95.73\%.
+
+In both the naive and column pattern, Nvidia Nsight Compute reported that the scheduler is stalling due to the L1 instruction queue for local and global memory operation being full.
+However, the column pattern fix stalls on long scoreboard, meaning instruction could not be executed out of order due to a depedency on an unfinished L1TEX (local, global, surface, tex) operation.

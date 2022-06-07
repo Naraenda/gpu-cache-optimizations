@@ -425,5 +425,9 @@ This lowers the amount of cache loads significantly
     F \approx \ceil{\frac{D}{L}} I_h + \ceil{\frac{I_w}{L}} D
 \end{equation}
 
-
 \subsection{Tiling}
+Tiling is a common optimization technique for matrix multiplication.
+\citet{lam1991cache} suggests a blocking factor of $\sqrt{C/2}$ since at that point selft interference is minimum.
+
+\subsection{(S)GEMM in cuBLAS}
+(Single) Precision General Matrix Multiplication (SGEMM) in Nvidia's implementation of Basic Linear Algebra Subroutines (BLAS) named cuBLAS is a closed sourced library that implements a very optimized GPU based matrix multiplication.
