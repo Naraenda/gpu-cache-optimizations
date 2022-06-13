@@ -26,6 +26,7 @@ __global__ void matrix_naive(T *o, T *a, T *b, int depth, int width, int height)
     o[tid] = result;
     
 }
+
 template <typename T>
 __global__ void matrix_column(T *o, T *a, T *b, int depth, int width, int height, int col_w) {
     int tid = blockIdx.x * blockDim.x + threadIdx.x;
@@ -115,39 +116,21 @@ void benchmark(int bench_count, int block_size, int column_width, int size) {
 
     cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);
     cudaMemcpy(d_a, h_a, sizeof(T) * N, cudaMemcpyHostToDevice);
-
-    // run benchmark
-    cudaEvent_t gpu_start, gpu_stop;
     
     std::cout << "Running benchmark." << std::endl;
     float naive_time = 0;
     for (size_t i = 0; i < bench_count; i++) {
-        float execution_time;
-        cudaEventCreate(&gpu_start);
-        cudaEventCreate(&gpu_stop);
 
         //cudaMemcpy(d_a, h_a, sizeof(float) * N, cudaMemcpyHostToDevice);
         
-        cudaEventRecord(gpu_start);
         if (column_width == -1) {
             matrix_cublas(d_o, d_a, d_b, size);
         } else if (column_width == 0) {
             matrix_naive<T><<<block_count, block_size>>>(d_o, d_a, d_b, size, size, size);
         } else {
             matrix_column<T><<<block_count, block_size>>>(d_o, d_a, d_b, size, size, size, column_width);
+            matrix_col_outer<T><<<block_count * size, block_size>>>(d_o, d_a, d_b, size, size, size, column_width);
         }
-        
-        // CUBLAS:
-
-        cudaEventRecord(gpu_stop);
-        
-        cudaEventSynchronize(gpu_stop);
-        cudaEventElapsedTime(&execution_time, gpu_start, gpu_stop);
-
-        cudaEventDestroy(gpu_start);
-        cudaEventDestroy(gpu_stop);
-
-        naive_time += execution_time / bench_count;
     }
 
     // Device to Host Copy

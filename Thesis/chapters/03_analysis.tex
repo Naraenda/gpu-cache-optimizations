@@ -6,14 +6,14 @@ Additionally, we will not take into consideration cache associativity to simplif
 \label{sec:st_analysis}
 The memory accesses of an algorithm can be plotted in a spatial-temporal diagram, with the address space on the spatial axis and order of access on the temporal axis.
 Since only the thread order can be manipulated, we do not need the granuality of the individual memory accesses within a thread.
-This also avoids the problem of threads being concurrent and puts the focus on the temporal locaity between threads.
+This also avoids the problem of threads being concurrent and puts the focus on the temporal locality between threads.
 A different thread order shuffles the columns within this diagram: the same data is accessed but simply in a different order.
 
 Additionally, we annotate this diagram with the cache level (L1, L2, RAM) of each memory address by simulating memory.
 For the simulation we will use a simple LRU eviction policy which most Nvidia GPUs use and is similar to newer variation on the newer architectures like Turing and Volta, (see section \ref{sec:cache_gpu}).
 \TODO{Feedback: do I need a smaller example?}
 
-The resulting spatial temporal diagram (for example, figure \ref{fig:st_stencil_naive}) has the vertical axis describing the location in a 2D array which is mapped to 1D address space and the horizontal axis describing time. \fsquare{red} are addresses of cache lines that are brought into cache. \fsquare{black} are addresses being accessed. \fsquare{gray} are addresses in cache.
+The resulting spatial temporal diagrams (for example, figure \ref{fig:st_stencil_naive}) have the vertical axis describing the location in a 2D array which is mapped to 1D address space and the horizontal axis describing time. \fsquare{red} are addresses of cache lines that are brought into cache. \fsquare{black} are addresses being accessed. \fsquare{gray} are addresses in cache.
 
 \section{Stencil Operations}
 
@@ -427,7 +427,8 @@ This lowers the amount of cache loads significantly
 
 \subsection{Tiling}
 Tiling is a common optimization technique for matrix multiplication.
-\citet{lam1991cache} suggests a blocking factor of $\sqrt{C/2}$ since at that point selft interference is minimum.
+\citet{lam1991cache} suggests a tiling size (\citeauthor{lam1991cache} use the term blocking factor) of $\sqrt{C/2}$ since at that point self interference is minimum.
 
-\subsection{(S)GEMM in cuBLAS}
 (Single) Precision General Matrix Multiplication (SGEMM) in Nvidia's implementation of Basic Linear Algebra Subroutines (BLAS) named cuBLAS is a closed sourced library that implements a very optimized GPU based matrix multiplication.
+We can, however, look into implementation of GEMM in CUTLASS, an open source alternative to cuBLAS which performs within 80-100\% of cuBLAS depending on platform and workload.
+CUTLASS uses a hierarchial structure for tiling putting the outer product first and foremost.

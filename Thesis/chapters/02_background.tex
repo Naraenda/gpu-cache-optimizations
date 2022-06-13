@@ -7,7 +7,7 @@ On modern Nvidia GPU architectures is composed of multiple GPU Processing Cluste
 The main point of interest are the streaming multiprocessors which handle the data processing.
 The GPU uses a single instruction multiple threads (SIMT) execution model, and the scheduler in each SM dispatches instructions to multiple cores to the various specialized cores for each of the various execution pipelines (single and double precision computation, integer computation, etc.).
 
-On the Turing, Volta and Ampera architectures each SM has 4 warp schedulures and the accompanying pipelines and therefore \citeauthor{jia2019dissecting} suggests that a threadblock should contain at least 128 threads due to SMs on Turing, Volta, and Ampere being split into four processing blocks so at least all 4 schedulures can be completely utilized. \cite{jia2019dissecting,nvidia2017volta,nvidia2018turing,nvidia2020ampere}.
+On the Turing, Volta and Ampera architectures each SM has 4 warp schedulers and the accompanying pipelines and therefore \citeauthor{jia2019dissecting} suggests that a threadblock should contain at least 128 threads due to SMs on Turing, Volta, and Ampere being split into four processing blocks so at least all 4 schedulures can be completely utilized. \cite{jia2019dissecting,nvidia2017volta,nvidia2018turing,nvidia2020ampere}.
 The memory is structured in a multi-level hierarchy containing an L1 cache for each SM, a shared L2 cache for all SMs and multiple banks of DRAM \cite{nvidia2017volta,nvidia2020ampere} (figure \ref{fig:ampere_architecture}).
 Data can be shared between threads in the same CTA, and therefore on the same SM, via the L1 cache and between all threads via L2 cache.
 
@@ -46,7 +46,7 @@ Caches are hidden from this model as on most architectures they are managed by h
 
 Memory can become a significant bottleneck due to the large amount of threads running concurrently and the amount of data each thread processes.
 Caches are much faster than memory and are often on the same chip as the compute unit.
-However, they are limited in size, and given a large enough problem can cause cache trashing -- the premature eviction of data before any significant reuse \cite{dai2016model}.
+However, they are limited in size, and a large enough problem can cause cache trashing -- the premature eviction of data before any significant reuse \cite{dai2016model}.
 To improve the efficiency of caches, caches asume spatial locality via cache lines.
 A cache line is the smallest unit of data that a cache can hold, and fetching data from memory also brings extra nearby data with it.
 The L1 cache on a Turing GPU (and most other modern architectures) uses 128 byte cachelines which plays well with the 32-thread warp size since executing a fetch for a single precision floating point takes $32 \times 4 = 128$ bytes which can fit in a single cache line.
@@ -120,7 +120,8 @@ In both cases it is up to the compiler and programmer to exploit this for extra 
     }
 \end{table}
 
-\subsection{Software}
+\subsection{Kernel Execution}
+\label{sec:kernel_execution}
 When working with CUDA the programmer defines a kernel.
 This is normally done with CUDA C++, an extension on C++ programming language, but in our case Accelerate will handle the generation of kernels (section \ref{sec:accelerate}) \cite{nvidia2021cudadocs}.
 
@@ -175,7 +176,7 @@ With the volta architecture, independent thread scheduling allows full concurenc
 \end{figure}
 
 \subsection{Performance of Access Patterns}
-\citeauthor{lam1991cache} and \citeauthor{meyer2003algorithms} describe two types of reference reuse\cite{lam1991cache, meyer2003algorithms}:
+\citeauthor{lam1991cache} and \citeauthor{meyer2003algorithms} describe two types of reference reuse \cite{lam1991cache, meyer2003algorithms}:
 \begin{itemize}
     \item \textbf{Spatial reuse} occurs when accessing data from the same cache line, increasing spatial locality.
     \item \textbf{Temporal reuse} occurs when the same data is accessed at a later time, increasing temporal locality.
@@ -203,7 +204,12 @@ From \citeauthor{lam1991cache}'s observations with matrix multiplications, the t
 
 
 \section{CPU vs GPU based multi-threading}
-\TODO{Aka, the limits of GPUs, segway to introduce Accelerate}
+CPUs and GPUs differ in multiple ways.
+GPUs consist out of many more cores compared to CPUs, however this also comes in a reduction in core complexity and capability.
+In contrast, CPUs can leverage specialized instructions.
+For example, Streaming SIMD Extensions (SSE) and Advanced Vector Extensions (AVX, AVX2, and AVX-512) allows CPU to process multiple data with singular instructions.
+SSE can handle four 32-bit single-precision floating point numbers while AVX and AVX2 handle eight 32-bit single precision floating point numbers.
+AVX-512 can handle 16 numbers, but is not widely implemented.
 
 \section{Accelerate}
 \TODO{Generalize to Array DSLs}
@@ -246,7 +252,7 @@ Additionally, \citeauthor{li2017locality} implemented three optimizations into t
 \textbf{iii) CTA Prefetching using Reshaped Order}
 
 CTA clustering observed no significant speedup for normal and dense matrix multiplications.
-For convolutional neural networks (similar memory access patterns as stencils), a $1.4\times$ speedup was observed for redirection based clustering, and a $1.2\times$ speedup for other clustering algorithms of the fermi architecture.
+For convolutional neural networks (similar memory access patterns as stencils), a $1.4\times$ speedup was observed for redirection based clustering, and a $1.2\times$ speedup for other clustering algorithms of the Fermi architecture.
 However, on the Pascal architecture, convolutional neural networks no speedup was observed, and on Maxwell and Kepler this improvement is limited to $1.1\times$.
 
 \subsection{PAVER}

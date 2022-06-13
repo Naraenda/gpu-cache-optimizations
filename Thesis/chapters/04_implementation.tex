@@ -82,8 +82,8 @@ The index mapping $i \mapsto j$ to get the columning order consists out of four 
 \begin{itemize}
     \item The starting offset of the column $o$.
     \item The column width $w'$.
-    \item The index within a column $i'$
-    \item The position within the column $(x, y)$
+    \item The index within a column $i'$.
+    \item The position within the column $(x, y)$.
 \end{itemize}
 
 \begin{figure}[!hb]
@@ -126,36 +126,35 @@ The index mapping $i \mapsto j$ to get the columning order consists out of four 
 \end{figure}
 
 
-First, we calculate the offset for the starting index of the column we need to map to
+First, we calculate the offset for the starting index of the column we need to map to:
 
 \begin{align}
     o  &= \floor{\frac{i}{I_h w}} w
-    \\ \intertext{Then, modify the width value such that the last column does not exceed the input width}
+    \\ \intertext{Then, modify the width value such that the last column does not exceed the input width:}
     w' &= \begin{cases}
         I_w - o& \text{if last column}
         \\
         w & \text{otherwise}
     \end{cases}
-    \\ \intertext{And take $i'$ as the index within a column}
+    \\ \intertext{And take $i'$ as the index within a column:}
     i' &= i \bmod I_h w'
-    \\ \intertext{Calculate the position $(x, y)$ within the column}
+    \\ \intertext{Calculate the position $(x, y)$ within the column:}
     x & = i' \bmod w'
     \\ 
     y & = \floor{\frac{i'}{w'}}
-    \\ \intertext{So that we can calculate $j$}
+    \\ \intertext{So that we can calculate $j$:}
     \label{eq:column_mapping_to_j}
     j  &= x + y I_w + o
 \end{align}
 
-\TODO{What are the effects of GPU warps (32 threads) with this schedule?}
-
-On GPUs threads in threadblocks are batched in warps of 32 threads and these warps may be executed in an arbitrary order (\TODO{ref back to earlier sec}).
-As a result we might not be able to exploit the cache as much since column orders are highly dependent on thread order.
+On GPUs threads in threadblocks are batched in warps of 32 threads and these warps may be executed in an arbitrary order (section \ref{sec:sec:kernel_execution}).
+As a result we might not be able to exploit the cache as much since column orders are highly dependent on thread order and on the higher level, CTAs may be assigned in a completely arbitrary way.
 
 \subsection{Zigzagging variation}
 
-A solution to increase thread locality within wraps in non-multiple widths of 32 is to zizzag on every other row.
-We modify equation \ref{eq:column_mapping_to_j}
+A solution to increase thread locality within wraps in non-multiple widths of 32 is to zigzag on every other row.
+We modify equation \ref{eq:column_mapping_to_j}:
+
 \begin{equation}
     j = \left(\begin{cases}
         x & y \text{ is uneven}
