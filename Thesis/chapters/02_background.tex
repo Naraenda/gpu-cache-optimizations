@@ -208,8 +208,11 @@ CPUs and GPUs differ in multiple ways.
 GPUs consist out of many more cores compared to CPUs, however this also comes in a reduction in core complexity and capability.
 In contrast, CPUs can leverage specialized instructions.
 For example, Streaming SIMD Extensions (SSE) and Advanced Vector Extensions (AVX, AVX2, and AVX-512) allows CPU to process multiple data with singular instructions.
-SSE can handle four 32-bit single-precision floating point numbers while AVX and AVX2 handle eight 32-bit single precision floating point numbers.
-AVX-512 can handle 16 numbers, but is not widely implemented.
+SSE can handle four 32-bit single-precision floating point numbers while AVX and AVX2 handle eight.
+AVX-512 can handle sixteen, but is not widely implemented.
+
+Caches also share the same hierarchical structure as the cores, however this differs per manufacturer and architecture.
+Often the cache L1 is local to each thread, and L2 local to each core with 2 threads per core.
 
 \section{Accelerate}
 \TODO{Generalize to Array DSLs}
