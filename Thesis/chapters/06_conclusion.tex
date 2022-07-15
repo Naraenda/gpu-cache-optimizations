@@ -1,0 +1,10 @@
+Using a column thread ordering improves the performance of naive stencil and matrix multiplication operations.
+We improve hitrates of the L1 cache by a significant amount.
+Usually, a column width of 32, 64, or 128 is ideal as this allows us to more properly utilize the warp (32 threads), cache lines (128 bytes = 32 $\times$ 4 bytes), and scheduler (4 warps).
+Specialized matrix multiplication code (cuBLAS/CUTLASS) is still faster than simple thread rescheduling, however the code and assembly is also much more complex.
+
+\section{Future Work}
+While column based iteration does improve performance there may still be some improvements.
+Column based iteration could be tested more thoroughly with more real world scenarios, more complex, and higher dimensional problems.
+This can also include applying the optimization to generalized matrix multiplication.
+Furthermore, finding a better method for the spatial-temporal analysis that includes the non-linearity of parallel execution may allow us to gain more insight into faster thread patterns.

@@ -39,6 +39,6 @@
 \PYG{+w}{    }\PYG{n}{y}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{  }\PYG{n}{col\PYGZus{}tid}\PYG{+w}{ }\PYG{o}{/}\PYG{+w}{ }\PYG{n}{col\PYGZus{}tw}\PYG{p}{;}
 \PYG{+w}{    }\PYG{n}{tid}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{x}\PYG{+w}{ }\PYG{o}{+}\PYG{+w}{ }\PYG{p}{(}\PYG{n}{y}\PYG{+w}{ }\PYG{o}{*}\PYG{+w}{ }\PYG{n}{width}\PYG{p}{);}
 
-\PYG{+w}{    }\PYG{n}{do\PYGZus{}things\PYGZus{}with}\PYG{p}{(}\PYG{n}{tid}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{x}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{z}\PYG{p}{);}
+\PYG{+w}{    }\PYG{n}{do\PYGZus{}things\PYGZus{}with}\PYG{p}{(}\PYG{n}{tid}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{x}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{y}\PYG{p}{);}
 \PYG{p}{\PYGZcb{}}
 \end{Verbatim}

@@ -1,0 +1,19 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{k+kr}{\PYGZus{}\PYGZus{}global\PYGZus{}\PYGZus{}}\PYG{+w}{ }\PYG{k+kt}{void}\PYG{+w}{ }\PYG{n}{my\PYGZus{}kernel}\PYG{p}{(}\PYG{k+kt}{int}\PYG{+w}{ }\PYG{n}{col\PYGZus{}w}\PYG{p}{,}\PYG{+w}{ }\PYG{k+kt}{int}\PYG{+w}{ }\PYG{n}{width}\PYG{p}{,}\PYG{+w}{ }\PYG{p}{[...])\PYGZob{}}
+\PYG{+w}{    }\PYG{k+kt}{int}\PYG{+w}{ }\PYG{n}{tid}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n+nb}{blockIdx}\PYG{p}{.}\PYG{n}{x}\PYG{+w}{ }\PYG{o}{*}\PYG{+w}{ }\PYG{n+nb}{blockDim}\PYG{p}{.}\PYG{n}{x}\PYG{+w}{ }\PYG{o}{+}\PYG{+w}{ }\PYG{n+nb}{threadIdx}\PYG{p}{.}\PYG{n}{x}\PYG{p}{;}
+\PYG{+w}{    }\PYG{k+kt}{int}\PYG{+w}{ }\PYG{n}{x}\PYG{p}{;}\PYG{+w}{ }\PYG{c+c1}{// originally x = tid \PYGZpc{} width;}
+\PYG{+w}{    }\PYG{k+kt}{int}\PYG{+w}{ }\PYG{n}{y}\PYG{p}{;}\PYG{+w}{ }\PYG{c+c1}{// originally y = tid / width;}
+
+\PYG{+w}{    }\PYG{k+kt}{int}\PYG{+w}{ }\PYG{n}{col\PYGZus{}size}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{height}\PYG{+w}{ }\PYG{o}{*}\PYG{+w}{ }\PYG{n}{col\PYGZus{}w}\PYG{p}{;}
+\PYG{+w}{    }\PYG{k+kt}{int}\PYG{+w}{ }\PYG{n}{col\PYGZus{}id}\PYG{+w}{  }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{tid}\PYG{+w}{ }\PYG{o}{/}\PYG{+w}{ }\PYG{n}{col\PYGZus{}size}\PYG{p}{;}
+\PYG{+w}{    }\PYG{k+kt}{int}\PYG{+w}{ }\PYG{n}{col\PYGZus{}tid}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{tid}\PYG{+w}{ }\PYG{o}{\PYGZpc{}}\PYG{+w}{ }\PYG{n}{col\PYGZus{}size}\PYG{p}{;}
+\PYG{+w}{    }\PYG{k+kt}{int}\PYG{+w}{ }\PYG{n}{col\PYGZus{}off}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{col\PYGZus{}id}\PYG{+w}{ }\PYG{o}{*}\PYG{+w}{ }\PYG{n}{col\PYGZus{}w}\PYG{p}{;}
+\PYG{+w}{    }\PYG{k+kt}{int}\PYG{+w}{ }\PYG{n}{col\PYGZus{}tw}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{min}\PYG{p}{(}\PYG{n}{width}\PYG{+w}{ }\PYG{o}{\PYGZhy{}}\PYG{+w}{ }\PYG{n}{col\PYGZus{}id}\PYG{+w}{ }\PYG{o}{*}\PYG{+w}{ }\PYG{n}{col\PYGZus{}w}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{col\PYGZus{}w}\PYG{p}{);}
+
+\PYG{+w}{    }\PYG{n}{x}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{p}{(}\PYG{n}{col\PYGZus{}tid}\PYG{+w}{ }\PYG{o}{\PYGZpc{}}\PYG{+w}{ }\PYG{n}{col\PYGZus{}tw}\PYG{p}{)}\PYG{+w}{ }\PYG{o}{+}\PYG{+w}{ }\PYG{n}{col\PYGZus{}off}\PYG{p}{;}
+\PYG{+w}{    }\PYG{n}{y}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{  }\PYG{n}{col\PYGZus{}tid}\PYG{+w}{ }\PYG{o}{/}\PYG{+w}{ }\PYG{n}{col\PYGZus{}tw}\PYG{p}{;}
+\PYG{+w}{    }\PYG{n}{tid}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{x}\PYG{+w}{ }\PYG{o}{+}\PYG{+w}{ }\PYG{p}{(}\PYG{n}{y}\PYG{+w}{ }\PYG{o}{*}\PYG{+w}{ }\PYG{n}{width}\PYG{p}{);}
+
+\PYG{+w}{    }\PYG{n}{do\PYGZus{}things\PYGZus{}with}\PYG{p}{(}\PYG{n}{tid}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{x}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{y}\PYG{p}{);}
+\PYG{p}{\PYGZcb{}}
+\end{Verbatim}

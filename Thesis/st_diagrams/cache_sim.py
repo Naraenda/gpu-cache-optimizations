@@ -8,8 +8,8 @@ CACHE_SIZE  = 24
 CACHE_WIDTH = 4
 
 # Thread execution params
-WIDTH  = 8
-HEIGHT = 32
+WIDTH  = 16
+HEIGHT = 16
 
 def pattern_stencil(size):
     m = size // 2
@@ -70,7 +70,7 @@ pattern = pattern_stencil(7)
 thread_ids = [(x, y) for y in range(HEIGHT) for x in range(WIDTH)]
 thread_count = len(thread_ids)
 
-#thread_ids = remap_tile(2)(thread_ids)
+thread_ids = remap_tile(4)(thread_ids)
 #thread_ids = remap_column(4)(thread_ids)
 
 # Gather addresses

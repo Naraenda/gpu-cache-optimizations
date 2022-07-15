@@ -11,7 +11,6 @@ A different thread order shuffles the columns within this diagram: the same data
 
 Additionally, we annotate this diagram with the cache level (L1, L2, RAM) of each memory address by simulating memory.
 For the simulation we will use a simple LRU eviction policy which most Nvidia GPUs use and is similar to newer variation on the newer architectures like Turing and Volta, (see section \ref{sec:cache_gpu}).
-\TODO{Feedback: do I need a smaller example?}
 
 The resulting spatial temporal diagrams (for example, figure \ref{fig:st_stencil_naive}) have the vertical axis describing the location in a 2D array which is mapped to 1D address space and the horizontal axis describing time. \fsquare{red} are addresses of cache lines that are brought into cache. \fsquare{black} are addresses being accessed. \fsquare{gray} are addresses in cache.
 
@@ -205,20 +204,18 @@ More specifically, inputs that are horizontally wide.
         }
     }
     \caption{
-        \TODO{write this}
+        Stencil operations require enough cache to prevent chasing.
     }
     \label{fig:stencil_naive_loading_pattern}
 \end{figure}
 
 The lower bound of cache in amount of cache lines needed $M_l$ is bounded by the total horizontal footprint $I_w + S_w$ in amount of cache lines $L$, multiplied by the stencil height $S_h$
-\TODO{Maths}
 
 \begin{equation}
     M_l \geq \ceil{\frac{I_w + S_w}{L}} S_h \label{eq:stencil_naive_optimal_memory}
 \end{equation}
 
-While in most cases \TODO{examples} this enough to fully exploit L2 caches, this can be unoptimal in regard to the L1 cache.
-\TODO{Example}
+While in most cases (such as a $9\times9$ stencil on a $2048\times2048$ array of floating point numbers which takes roughly \~80 KiB of cache.) this enough to fully exploit L2 caches, this can be unoptimal in regard to the L1 cache (64 KiB max on the Turing architecture).
 The amount of cache lines needed to be fetched from memory $F$ is bound by the worse case (eq. \ref{eq:stencil_naive_optimal_memory} is not satisfied) where we consistently evict data from cache before we can reuse:
 
 \[
@@ -231,7 +228,6 @@ If equation \ref{eq:stencil_naive_optimal_memory} is satisfied, the amount of fe
     F = \ceil{\frac{I_w + S_w}{L}} I_h
 \]
 
-\TODO{GPU threading is different from CPU stuff yada yada}
 With multiple threads active, even more data is required to be kept in cache for optimal usuage.
 In the best case, all threads are cohesive with overlapping accesses, and in the worst case, threads will be spread out more with less overlapping accesses.
 Threads in GPUs are grouped by warps, threads contained within are always cohered, and therefore a guarantee for overlapping accesses.
@@ -242,47 +238,8 @@ When the warp is split between 2 rows, the cache needs to be slightly bigger: $\
 Ideally, the whole input array would fit on the cache, but a sufficiently large input (e.g. a $2048\times2048$ 32-bit floating point array uses 16 MiB) will not fit on the L2 caches of modern GPUs ($\approx6$MiB of L2 data cache, Volta V100) and cache misses are unavoidable.
 Even if data would fit on the L2 cache, there would still be potential cache misses at the L1 cache (128 KiB, Volta V100).
 
-\TODO{More figures like in fig. \ref{fig:stencil_naive_loading_pattern}, but for GPU/multithreading}
-
-\vspace{2cm}
-
-Using the model described in section \ref{sec:cache_gpu} can be used to estimate the cache misses of the naive implementation and the model parameters are summarized in table \ref{tab:stencil_naive_model}.
-Calculating the reuse for an iteration of $s_y$, $i_x$, and $i_y$ is fairly trivial.
-
-\TODO{These are the calculations adapted from Lam et al. 1991. I'm not really sure if I should do this. They feel not very ellegant, and more like a black box system\dots}
-$s_x$ is ommited due to it only loading a singular value during one loop and has therefore no reuse.
-During a single step of $s_y$ an entire row of all $S_w$ elements from the stencil has been loaded.
-A single step on $i_x$ processes the output of a singular element, which means an entire stencil is read.
-
-
-\begin{table}[H]
-    \centering
-    \begin{tabular}{|c||c|c|c|c||c|c|c|c|}
-        \hline
-        Array & \multicolumn{4}{c||}{Reuse} & \multicolumn{4}{c|}{Self-Interference}
-        \\ \hline
-        & $i_x$ & $i_y$ & $s_x$ & $s_y$
-        & $i_x$ & $i_y$ & $s_x$ & $s_y$
-        \\ \hline
-        X & $(S_w - 1)S_h$ & $(S_h - 1) S_w I_w$ & - & $S_w$
-        & &  & 0 & 0
-
-        \\ \hhline{*{9}{=}}
-        Array & \multicolumn{4}{c||}{Footprint} &  \multicolumn{4}{c|}{References}
-        \\ \hline
-        & $i_x$ & $i_y$ & $s_x$ & $s_y$ & \multicolumn{4}{c|}{}
-        \\ \hline
-        X & $S_wS_h/C$ & $I_wS_h/C$ & $1/C$ & $S_w/C$ &
-        \multicolumn{4}{c|}{$I_w I_h S_w S_h$}
-        \\ \hline
-    \end{tabular}
-
-    \caption{
-        The reuse, self-interference, and footprint of the naive implementation of stencils during a single step of iterating on $i_x$, $i_y$, $s_x$, and $s_y$.
-        \TODO{Calculate self interference}
-    }
-    \label{tab:stencil_naive_model}
-\end{table}
+Using the model by \citeauthor{lam1991cache} and described in section \ref{sec:cache_gpu} can be used to estimate the cache misses of the naive implementation.
+However, this requires a simulation to factor in self-interference.
 
 \subsection{Tiling}
 \label{sec:stencil_tiled}
@@ -308,25 +265,15 @@ In practise, equation \ref{eq:stencil_tiling_memory} can be satisfied by adjusti
     \label{eq:stencil_tiling_fetches}
 \end{equation}
 
-\TODO{Maybe remove this. Probably just keep it, so we can plot our expected number of cache line fetches}
-We can define the number cache lines fetched in terms of the available cache by substituting equation \ref{eq:stencil_tiling_memory} into equation \ref{eq:stencil_tiling_fetches}:
-
-\begin{equation}
-    F \leq \ceil{\frac{I_w}{\frac{L M_l}{S_h} - S_w}} \ceil{\frac{\frac{L M_l}{S_h} - S_w + S_w}{L}} \ceil{\frac{I_h}{\frac{L M_l}{S_h} - S_w}} \left(\frac{L M_l}{S_h} - S_w + S_h\right)
-\end{equation}
-
-\begin{equation}
-    F \leq \frac{I_w I_h M_l}{(\frac{L M_l}{S_h} - S_w)^2 S_h} (\frac{L M_l}{S_h} - S_w + S_h)
-\end{equation}
-\TODO{simplify this further by relaxation perhaps?}
-
 
 \TODO{GPU/multithreading notes}
 
 \section{Matrix Multiplication}
 
 \subsection{Naive}
-\TODO{writewrite}
+\label{sec:matrix_naive}
+The matrix multiplication of $C = AB$ can be described as $c_{i,j} = \sum_{k}a_{i,k}b_{k,j}$ and can be implemented naively as in listing \ref{lst:mm_naive_cuda}.
+
 \begin{listing}[H]
     \begin{minted}{cuda}
 __global__ void matrix_naive(float *o, float *a, float *b, int depth, int width, int height) {
@@ -351,6 +298,8 @@ __global__ void matrix_naive(float *o, float *a, float *b, int depth, int width,
     }
     \label{lst:mm_naive_cuda}
 \end{listing}
+
+We run a similar simulation as in section \ref{sec:stencil_naive} with the parameters described in table \ref{tab:sim_matrix_params}.
 
 \begin{table}[H]
     \centering
