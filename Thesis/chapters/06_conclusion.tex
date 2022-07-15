@@ -8,3 +8,6 @@ While column based iteration does improve performance there may still be some im
 Column based iteration could be tested more thoroughly with more real world scenarios, more complex, and higher dimensional problems.
 This can also include applying the optimization to generalized matrix multiplication.
 Furthermore, finding a better method for the spatial-temporal analysis that includes the non-linearity of parallel execution may allow us to gain more insight into faster thread patterns.
+
+Another vector of improvement is seeing if this can be applied to optimizing CPU code aswell.
+Hoever, a problem is that often more complex patterns may impede the compiler's ability to vectorize the code into SSE/AVX instructions.
