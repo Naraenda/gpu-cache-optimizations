@@ -1,6 +1,7 @@
 # Editor
 .mypy_cache
 .vscode
+_minted-**
 
 # Temp Files
 *.aux

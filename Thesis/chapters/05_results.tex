@@ -1,11 +1,15 @@
-\TODO{Benchmark results, Nvidia profiler statistics}
+The optimization described in chapter \ref{chap:cbi} has been implemented as both a native CUDA program and a modification to the CUDA Accelerate backend.
+Both implementations are benchmarking stencil operations and matrix multiplication on a Nvidia RTX 2080 Super GPU with a AMD Ryzen 5800x3D as CPU.
+
 \section{CUDA Benchmarks}
 
-We run the remapping on two simple CUDA programs: a $9 \times 9$ stencil operation on a $4096 \times 4096$ input, and a matrix multiplication on two $1024 \times 1024$ arrays of 32-bit floating point numbers.
+Two simple problems have been implemented as a simple CUDA program: a $9 \times 9$ stencil operation on a $4096 \times 4096$ input, and a matrix multiplication on two $1024 \times 1024$ arrays of 32-bit floating point numbers.
+We execute the program naively, with the no remapping, and with our optimization: column based iteration.
 The kernel is analyzed with Nvidia profiler (\texttt{nvprof}) and Nvidia Nsight Compute CLI (\texttt{ncu}).
 Contrary to our expectations, the kernel execution time seems to be not correlated to our estimated column width at all, instead prefering lower multiple of 32 widths regardless of block size (figure \ref{fig:cuda_kernel_times}).
 
-\begin{figure}[b]
+
+\begin{figure}[H]
     \centering
     \makebox[\textwidth][c] {
         \subfloat[The execution time in milliseconds of a $9 \times 9$ stenciling kernel on a $4096 \times 4096$ input array with various column sizes and block sizes (prefixed with \textit{b}).]{
@@ -43,7 +47,7 @@ Contrary to our expectations, the kernel execution time seems to be not correlat
     }
     \label{fig:cuda_kernel_time_matrix}
     \caption{
-        asda
+        The execution time of stenciling operations and matrix multiplication on a power-of-two input. Lower is better.
     }
     \label{fig:cuda_kernel_times}
 \end{figure}
@@ -53,7 +57,7 @@ Changing the data type to half precision (16-bit) floating points had effect on 
 Using 64-bit double precision floating points made the kernel compute bound instead of memory bound and therefore no tangible difference between the naive implementation and any column remapping is observed.
 This exeggerates our earlier assumption (section \ref{sec:implementation_theory}) that the 32 thread wide warps might play a role.
 
-\begin{figure}
+\begin{figure}[H]
     \centering
     \pgfplotstabletypeset[col sep=comma,
         /color cells/max=1.25,
@@ -71,7 +75,7 @@ This exeggerates our earlier assumption (section \ref{sec:implementation_theory}
     \label{fig:cuda_kernel_time_stencil_no_pow2}
 \end{figure}
 
-\begin{figure}
+\begin{figure}[H]
     \centering
     \begin{tikzpicture}
         \begin{axis}[
@@ -109,7 +113,9 @@ This exeggerates our earlier assumption (section \ref{sec:implementation_theory}
     }
 \end{figure}
 
-\begin{figure}
+Execution time for matrix multiplication with CBI compared to naive only appears to improve after a certain input size ($2^8$) and has diminishing returns after ($2^10$), see figure \ref{fig:mm_naive_vs_cbi}.
+
+\begin{figure}[H]
     \centering
     \begin{tikzpicture}
         \begin{axis}[
@@ -145,6 +151,7 @@ This exeggerates our earlier assumption (section \ref{sec:implementation_theory}
     \caption{
         The relative kernel execution time of various column widths compared to the naive implementation for the matrix multiplication of two $N \times N$ matrices. Lower is better.
     }
+    \label{fig:mm_naive_vs_cbi}
 \end{figure}
 
 \section{Hardware Utilization}
@@ -154,3 +161,6 @@ The L2 hit rate dropped from 98.52\% in the naive case to 95.73\%.
 
 In both the naive and column pattern, Nvidia Nsight Compute reported that the scheduler is stalling due to the L1 instruction queue for local and global memory operation being full.
 However, the column pattern fix stalls on long scoreboard, meaning instruction could not be executed out of order due to a depedency on an unfinished L1TEX (local, global, surface, tex) operation.
+
+\section{Accelerate Benchmarks}
+\TODO{I don't have access to this data right now oops}
