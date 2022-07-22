@@ -377,6 +377,6 @@ This lowers the amount of cache loads significantly
 Tiling is a common optimization technique for matrix multiplication.
 \citet{lam1991cache} suggests a tiling size (\citeauthor{lam1991cache} use the term blocking factor) of $\sqrt{C/2}$ since at that point self interference is minimum.
 
-(Single) Precision General Matrix Multiplication (SGEMM) in Nvidia's implementation of Basic Linear Algebra Subroutines (BLAS) named cuBLAS is a closed sourced library that implements a very optimized GPU based matrix multiplication.
+Matrix multiplication is often implemented as Single (Precision) General Matrix Multiplication (SGEMM). Nvidia's implementation of Basic Linear Algebra Subroutines (BLAS), named cuBLAS, is a closed sourced library that implements a very optimized GPU based matrix multiplication.
 We can, however, look into implementation of GEMM in CUTLASS, an open source alternative to cuBLAS which performs within 80-100\% of cuBLAS depending on platform and workload.
 CUTLASS uses a hierarchial structure for tiling putting the outer product first and foremost.
