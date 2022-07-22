@@ -9,7 +9,7 @@ The GPU uses a single instruction multiple threads (SIMT) execution model, and t
 
 On the Turing, Volta and Ampera architectures each SM has 4 warp schedulers and the accompanying pipelines and therefore \citeauthor{jia2019dissecting} suggests that a threadblock should contain at least 128 threads due to SMs on Turing, Volta, and Ampere being split into four processing blocks so at least all 4 schedulures can be completely utilized. \cite{jia2019dissecting,nvidia2017volta,nvidia2018turing,nvidia2020ampere}.
 The memory is structured in a multi-level hierarchy containing an L1 cache for each SM, a shared L2 cache for all SMs and multiple banks of DRAM \cite{nvidia2017volta,nvidia2020ampere} (figure \ref{fig:ampere_architecture}).
-Data can be shared between threads in the same CTA, and therefore on the same SM, via the L1 cache and between all threads via L2 cache.
+Data can be shared between threads in the same cooperative thread array (CTA), and therefore on the same SM, via the L1 cache and between all threads via L2 cache.
 
 \begin{figure}[!hb]
     \centering
@@ -129,7 +129,7 @@ Executions on a GPU are directed on both the host and device (GPU).
 \textit{Kernels} define the functions that should be executed on the GPU.
 The host side controls how these kernels should be executed, namely how the threads should be launched and executed.
 Threads are grouped and defined on a 2 level hierarchy: threads are grouped together in \textit{cooperative thread arrays} (CTAs), also known as thread blocks, and multiple CTAs can be queued for the execution of a single kernel.
-Both can be controlled upon executing a kernel: the amount of threads per CTA (threadblock size) and the total amount of CTAs (gridsize).
+Both can be controlled upon executing a kernel: the number of threads per CTA (threadblock size) and the total number of CTAs (gridsize).
 CTAs get assigned to SMs in an arbitrary manner.
 
 When an SM executes a CTA, it splits the work into warps, a grouping of 32-threads.
@@ -137,7 +137,7 @@ On architecture before Volta, a single warp is executed in a single instruction,
 With the volta architecture, independent thread scheduling allows full concurency between threads and the scheduler can group multiple threads into SIMT units.
 
 SMs want to work on multiple warps since this can hide latency.
-After dispatching an instruction to an execution unit, the schedulur looks for the next warp that can execute an instruction (for example, not waiting for data) 
+After dispatching an instruction to an execution unit, the scheduler looks for the next warp that can execute an instruction (for example, not waiting for data) 
 
 \begin{figure}[!hb]
     \centering
@@ -168,7 +168,7 @@ After dispatching an instruction to an execution unit, the schedulur looks for t
     \item \textbf{Temporal reuse} occurs when the same data is accessed at a later time, increasing temporal locality.
 \end{itemize}
 The reuse factor can be kept track of by counting the two types of reuse.
-Loading data horizontally (sequentially) exploits spatial locality and is therefore cheaper than loading data vertically.
+Loading data horizontally (sequentially) in 2-dimensional array exploits spatial locality and is therefore cheaper than loading data vertically.
 Additionally, temporal reuse can only happen when other memory accesses do not displace reusable data from the cache.
 
 \citeauthor{lam1991cache} proposed a method to model cache interference.
@@ -216,17 +216,16 @@ Further customizations to the scheduler can be done on the executing side of the
 
 \subsection{Optimizations of Blocked Algorithms}
 \label{sec:optimization_blocked}
-\citeauthor{lam1991cache} expands on the well known idea of working on blocks instead of entire rows or columns.
+\citet{lam1991cache} expands on the well known idea of working on blocks instead of entire rows or columns.
 
 If all data fits onto cache without eviction, the misses that occur are \textit{intrinsic misses}.
 In the real world however, data can be evicted by other memory accesses.
 This interference of reuse is categorized between two cases: \textit{cross interference} and \textit{self interference}.
 Cross interference assumes the location of data in memory is unrelated to the location in cache, and instead is measured by probablity that the reuse falls within the footprint of the variable.
 Self interference extends this by taking the cache locations of variables into account, which can happen when the data for a single iteration no longer fits in cache.
-\cite{lam1991cache}
 
 \subsection{CTA Clustering}
-\citeauthor{li2017locality} presented a clustering algorithm for reorder threads to improve cache performance on GPU.
+\citet{li2017locality} presented a clustering algorithm for reorder threads to improve cache performance on GPU.
 It replaces a kernel with a new one with predefined clustering rules.
 CTAs with inter-CTA locality are clustered together which can then be assigned to SMs.
 The work in these clusters can be bounded to SMs in two ways:
@@ -243,7 +242,7 @@ For convolutional neural networks (similar memory access patterns as stencils), 
 However, on the Pascal architecture, convolutional neural networks no speedup was observed, and on Maxwell and Kepler this improvement is limited to $1.1\times$.
 
 \subsection{PAVER}
-\citeauthor{tripathy2021paver} presented a novel threadblock scheduling method \cite{tripathy2021paver} which analyses GPU code and generates a data dependency graph between threadblocks. 
+\citet{tripathy2021paver} presented a novel threadblock scheduling method which analyses GPU code and generates a data dependency graph between threadblocks. 
 A cache optimal program is then the clustering of threadblocks which have the least amount of dependency between clusters.
 \citeauthor{tripathy2021paver} have observed a 20-40\% performance improvement on matrix multiplication depending on the architecture and configuration.
 However, this method is not easily implementable and no publicly available implemention exists so far.

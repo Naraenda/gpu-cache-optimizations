@@ -72,7 +72,7 @@ boxblur5x5 = A.stencil s A.clamp
     average xs = sum xs / genericLength xs
     \end{minted}
     \caption{
-        How to use the accelerate stenciling function (listing \ref{lst:stencil_signature}) to produce a $5 \times 5$ box blur filter.
+        How to use the stenciling function (listing \ref{lst:stencil_signature}) in Accelerate to produce a $5 \times 5$ box blur filter.
     }
     \label{lst:stencil_usuage}
 \end{listing}
@@ -138,7 +138,7 @@ More specifically, inputs that are horizontally wide.
 % fig:st_stencil
 \begin{figure}[H]
     \centering
-    \subfloat[On input sizes too wide (i.e. $16 \times 16$) cache trashing occurs.]{
+    \subfloat[On input sizes too wide ($16 \times 16$) cache trashing occurs.]{
         \begin{tikzpicture}
             \node (image) at (0,0) {\includegraphics[width=0.4\textwidth]{st_diagrams/stencil7x7_linear.png}};
             \draw [->] (image.south west) -- ++(2,0) node[right]{\footnotesize\textit{Time}};
@@ -146,7 +146,7 @@ More specifically, inputs that are horizontally wide.
         \end{tikzpicture}
     }
     \qquad
-    \subfloat[The input size is modified to $8 \times 32$ which results in optimal cache utilization.]{
+    \subfloat[Running the same stenciling operation on a narrower input ($8 \times 32$) results in optimal cache utilization.]{
         \begin{tikzpicture}
             \node (image) at (0,0) {\includegraphics[width=0.4\textwidth]{st_diagrams/stencil7x7_linear_smaller_input.png}};
             \draw [->] (image.south west) -- ++(2,0) node[right]{\footnotesize\textit{Time}};
@@ -238,7 +238,7 @@ When the warp is split between 2 rows, the cache needs to be slightly bigger: $\
 Ideally, the whole input array would fit on the cache, but a sufficiently large input (e.g. a $2048\times2048$ 32-bit floating point array uses 16 MiB) will not fit on the L2 caches of modern GPUs ($\approx6$MiB of L2 data cache, Volta V100) and cache misses are unavoidable.
 Even if data would fit on the L2 cache, there would still be potential cache misses at the L1 cache (128 KiB, Volta V100).
 
-Using the model by \citeauthor{lam1991cache} and described in section \ref{sec:cache_gpu} can be used to estimate the cache misses of the naive implementation.
+The model by \citet{lam1991cache} and described in section \ref{sec:cache_gpu} can be used to estimate the cache misses of the naive implementation.
 However, this requires a simulation to factor in self-interference.
 
 \subsection{Tiling}
