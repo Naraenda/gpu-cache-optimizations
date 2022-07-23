@@ -245,7 +245,7 @@ However, this requires a simulation to factor in self-interference.
 \label{sec:stencil_tiled}
 A common used optimization is by dividing the work into works as described in \ref{sec:optimization_blocked} and this can be applied to stencil operations as well.
 
-The minimum required cache for optimal tiling is depedent on \TODO{\dots} tiling size $t$
+The cache size $M_l$ for optimal tiling is lower bound by the area of memory required to compute a single row within a tile of size $t$.
 
 \begin{equation}
     M_l \geq \ceil{\frac{t + S_w}{L}} S_h \label{eq:stencil_tiling_memory}
@@ -263,9 +263,6 @@ In practise, equation \ref{eq:stencil_tiling_memory} can be satisfied by adjusti
     F \leq \ceil{\frac{I_w}{t}} \ceil{\frac{t + S_w}{L}} \ceil{\frac{I_h}{t}} (t + S_h)
     \label{eq:stencil_tiling_fetches}
 \end{equation}
-
-
-\TODO{GPU/multithreading notes}
 
 \section{Matrix Multiplication}
 

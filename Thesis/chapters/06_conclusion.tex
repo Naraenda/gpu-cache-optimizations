@@ -1,7 +1,12 @@
-Using a column thread ordering improves the performance of naive stencil and matrix multiplication operations.
-We improve hitrates of the L1 cache by a significant amount.
+Column based iteration is a simple modification that improves the performance of naive stencil (up to 8\%) and matrix multiplication (up to 28\%) operations.
+We improve hitrates of the L1 cache by a significant amount (from 19\% to 77\%).
+After applying CBI, we still observe cache related bottlenecks: stalls due instructions not being able to be executed out of order due to L1 data depedencies.
+An idea might be to increasing the threadblock size to hide the latency but this will put too much pressure on the L1 cache.aa
 Usually, a column width of 32, 64, or 128 is ideal as this allows us to more properly utilize the warp (32 threads), cache lines (128 bytes = 32 $\times$ 4 bytes), and scheduler (4 warps).
 Specialized matrix multiplication code (cuBLAS/CUTLASS) is still faster than simple thread rescheduling, however the code and assembly is also much more complex.
+
+Unfortunately the performance increase within Accelerate is less consistent than our C++ and CUDA implementation. 
+\TODO{refer to Accelerate results}
 
 \section{Future Work}
 While column based iteration does improve performance there may still be some improvements.

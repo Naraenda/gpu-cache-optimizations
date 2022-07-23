@@ -1,4 +1,4 @@
-While tiling itself is a well-known optimization technique, we most consider the parts of why it works.
+While tiling itself is a well-known optimization technique, we must consider the parts of why it works.
 Temporal locality is increased because the scope of the work is smaller, which is done by sacraficing a bit of spatial locality: we no longer load an entire row, only a part.
 However, this only explains the horizontal tiling, vertical tiling only reduces the scope as we work on a smaller tile but when considering the entire workload, it ultimately does not matter.
 It can even be argued that by tiling vertically, we fragment the the workload as temporal locality cannot be guaranteed between tiles.
@@ -169,7 +169,7 @@ We can therefore encapsulate an N-dimensional problem into 2-dimensional (horzio
 \section{Implementation}
 
 The remapping algorithm described in section \ref{sec:implementation_theory} can be directly transcribed into C code (listing \ref{lst:column_cuda}).
-\begin{listing}[h]
+\begin{listing}[ht]
     \begin{minted}{cuda}
 __global__ void my_kernel(int width, [...]){
     // For a given thread ID we can compute the 
@@ -221,7 +221,7 @@ __global__ void my_kernel(int width, [...]){
 \end{listing}
 
 
-\begin{listing}[h]
+\begin{listing}[ht]
     \begin{minted}{cuda}
 __global__ void my_kernel(int col_w, int width, [...]){
     int tid = blockIdx.x * blockDim.x + threadIdx.x;
