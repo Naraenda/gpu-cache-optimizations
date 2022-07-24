@@ -3,14 +3,16 @@ We improve hitrates of the L1 cache by a significant amount (from 19\% to 77\%).
 After applying CBI, we still observe cache related bottlenecks: stalls due instructions not being able to be executed out of order due to L1 data depedencies.
 An idea might be to increasing the threadblock size to hide the latency but this will put too much pressure on the L1 cache.aa
 Usually, a column width of 32, 64, or 128 is ideal as this allows us to more properly utilize the warp (32 threads), cache lines (128 bytes = 32 $\times$ 4 bytes), and scheduler (4 warps).
-Specialized matrix multiplication code (cuBLAS/CUTLASS) is still faster than simple thread rescheduling, however the code and assembly is also much more complex.
+Specialized matrix multiplication code (cuBLAS/CUTLASS) is still faster than simple thread rescheduling, however the code and assembly is also much more complex
 
 Unfortunately the performance increase within Accelerate is less consistent than our C++ and CUDA implementation. 
 \TODO{refer to Accelerate results}
 
 \section{Future Work}
-While column based iteration does improve performance there may still be some improvements.
-Column based iteration could be tested more thoroughly with more real world scenarios, more complex, and higher dimensional problems.
+While column based iteration does improve performance there are still areas for possible improvements.
+Currently, CBI has only been tested and benchmarked on simple testcases and it is unknown how it will behave with multiple programs running on the same GPU.
+Seeing if similar improvements hold when other programs also fight for cache resources would be interesting as this would imply these improvements can also be applied to more consumer oriented programs such as video games and image processing.
+CBI also may work with other structured workloads that are memory bound.
 This can also include applying the optimization to generalized matrix multiplication.
 Furthermore, finding a better method for the spatial-temporal analysis that includes the non-linearity of parallel execution may allow us to gain more insight into faster thread patterns.
 

@@ -30,10 +30,10 @@
 \contentsline {subsection}{\numberline {4.1.2}Higher dimensions}{17}{}%
 \contentsline {section}{\numberline {4.2}Implementation}{17}{}%
 \contentsline {section}{\numberline {4.3}Stencil Operation}{18}{}%
-\contentsline {section}{\numberline {4.4}Matrix Multiplication}{18}{}%
-\contentsline {chapter}{\numberline {5}Results}{25}{}%
-\contentsline {section}{\numberline {5.1}CUDA Benchmarks}{25}{}%
-\contentsline {section}{\numberline {5.2}Hardware Utilization}{27}{}%
-\contentsline {section}{\numberline {5.3}Accelerate Benchmarks}{27}{}%
-\contentsline {chapter}{\numberline {6}Conclusion}{28}{}%
-\contentsline {section}{\numberline {6.1}Future Work}{28}{}%
+\contentsline {section}{\numberline {4.4}Matrix Multiplication}{19}{}%
+\contentsline {chapter}{\numberline {5}Results}{24}{}%
+\contentsline {section}{\numberline {5.1}CUDA Benchmarks}{24}{}%
+\contentsline {section}{\numberline {5.2}Hardware Utilization}{26}{}%
+\contentsline {section}{\numberline {5.3}Accelerate Benchmarks}{26}{}%
+\contentsline {chapter}{\numberline {6}Conclusion}{27}{}%
+\contentsline {section}{\numberline {6.1}Future Work}{27}{}%
