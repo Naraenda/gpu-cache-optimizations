@@ -1,20 +1,22 @@
-Column based iteration is a simple modification that improves the performance of naive stencil (up to 8\%) and matrix multiplication (up to 28\%) operations.
+Column based iteration (CBI) is a variation on tiling where we only split work only on one axis in a multidimensional workload. 
+It improves the performance of naive stencil (up to 8\%) and matrix multiplication (up to 28\%) operations.
+
 We improve hitrates of the L1 cache by a significant amount (from 19\% to 77\%).
-After applying CBI, we still observe cache related bottlenecks: stalls due instructions not being able to be executed out of order due to L1 data depedencies.
-An idea might be to increasing the threadblock size to hide the latency but this will put too much pressure on the L1 cache.aa
 Usually, a column width of 32, 64, or 128 is ideal as this allows us to more properly utilize the warp (32 threads), cache lines (128 bytes = 32 $\times$ 4 bytes), and scheduler (4 warps).
-Specialized matrix multiplication code (cuBLAS/CUTLASS) is still faster than simple thread rescheduling, however the code and assembly is also much more complex
+Wheras CBI improves performance over naiv matrix multiplication, specializd algorithms (as implemnted in cuBLAS/CUTLASS) are faster than our thread rescheduling.
 
 Unfortunately the performance increase within Accelerate is less consistent than our C++ and CUDA implementation. 
 \TODO{refer to Accelerate results}
 
 \section{Future Work}
 While column based iteration does improve performance there are still areas for possible improvements.
-Currently, CBI has only been tested and benchmarked on simple testcases and it is unknown how it will behave with multiple programs running on the same GPU.
+Currently, CBI has only been tested and benchmarked on simple testcases, and it is unknown how it will behave with multiple programs running on the same GPU.
 Seeing if similar improvements hold when other programs also fight for cache resources would be interesting as this would imply these improvements can also be applied to more consumer oriented programs such as video games and image processing.
 CBI also may work with other structured workloads that are memory bound.
+Furthermore, after applying CBI we still observe cache related bottlenecks: stalls due instructions not being able to be executed out of order due to L1 data depedencies.
+An idea might be to increasing the threadblock size to hide the latency, but this will put too much pressure on the L1 cache.
 This can also include applying the optimization to generalized matrix multiplication.
 Furthermore, finding a better method for the spatial-temporal analysis that includes the non-linearity of parallel execution may allow us to gain more insight into faster thread patterns.
 
-Another vector of improvement is seeing if this can be applied to optimizing CPU code aswell.
-Hoever, a problem is that often more complex patterns may impede the compiler's ability to vectorize the code into SSE/AVX instructions.
+Another vector of improvement is seeing if this can be applied to optimizing CPU code as well.
+However, a problem is that often more complex patterns may impede the compiler's ability to vectorize the code into SSE/AVX instructions and also may impede with hardware based prefetching.

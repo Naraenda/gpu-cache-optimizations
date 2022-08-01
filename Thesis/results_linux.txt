@@ -1,0 +1,61 @@
+# Optimized
+stencil/blur3x3/256                      mean 185.1 μs  ( +- 23.68 μs  )
+stencil/blur3x3/512                      mean 591.5 μs  ( +- 173.5 μs  )
+stencil/blur3x3/1024                     mean 1.075 ms  ( +- 496.2 μs  )
+stencil/blur3x3/2048                     mean 2.161 ms  ( +- 1.763 ms  )
+stencil/blur3x3/4096                     mean 2.586 ms  ( +- 5.421 ms  )
+
+stencil/blur5x5/256                      mean 209.1 μs  ( +- 55.18 μs  )
+stencil/blur5x5/512                      mean 207.9 μs  ( +- 40.04 μs  )
+stencil/blur5x5/1024                     mean 223.8 μs  ( +- 45.29 μs  )
+stencil/blur5x5/2048                     mean 333.2 μs  ( +- 72.06 μs  )
+stencil/blur5x5/4096                     mean 2.658 ms  ( +- 5.656 ms  )
+
+stencil/blur7x7/256                      mean 206.3 μs  ( +- 59.59 μs  )
+stencil/blur7x7/512                      mean 203.6 μs  ( +- 33.52 μs  )
+stencil/blur7x7/1024                     mean 227.7 μs  ( +- 32.17 μs  )
+stencil/blur7x7/2048                     mean 403.3 μs  ( +- 61.19 μs  )
+stencil/blur7x7/4096                     mean 2.940 ms  ( +- 5.485 ms  )
+
+stencil/blur9x9/256                      mean 204.5 μs  ( +- 55.20 μs  )
+stencil/blur9x9/512                      mean 219.8 μs  ( +- 39.76 μs  )
+stencil/blur9x9/1024                     mean 235.1 μs  ( +- 40.65 μs  )
+stencil/blur9x9/2048                     mean 559.5 μs  ( +- 68.31 μs  )
+stencil/blur9x9/4096                     mean 3.263 ms  ( +- 4.998 ms  )
+
+matrix/256                               mean 24.95 ms  ( +- 13.99 ms  )
+matrix/512                               mean 16.28 ms  ( +- 14.96 ms  )
+matrix/1024                              mean 19.65 ms  ( +- 15.69 ms  )
+matrix/2048                              mean 38.30 ms  ( +- 16.95 ms  )
+matrix/4096                              mean 185.1 ms  ( +- 15.91 ms  )
+
+# Naive
+stencil/blur3x3/256                      mean 188.3 μs  ( +- 24.70 μs  )
+stencil/blur3x3/512                      mean 618.4 μs  ( +- 185.4 μs  )
+stencil/blur3x3/1024                     mean 1.070 ms  ( +- 514.4 μs  )
+stencil/blur3x3/2048                     mean 2.128 ms  ( +- 1.793 ms  )
+stencil/blur3x3/4096                     mean 576.9 μs  ( +- 59.83 μs  )
+
+stencil/blur5x5/256                      mean 225.7 μs  ( +- 48.97 μs  )
+stencil/blur5x5/512                      mean 216.5 μs  ( +- 44.57 μs  )
+stencil/blur5x5/1024                     mean 236.4 μs  ( +- 32.54 μs  )
+stencil/blur5x5/2048                     mean 277.7 μs  ( +- 41.38 μs  )
+stencil/blur5x5/4096                     mean 2.541 ms  ( +- 5.047 ms  )
+
+stencil/blur7x7/256                      mean 221.6 μs  ( +- 68.90 μs  )
+stencil/blur7x7/512                      mean 239.4 μs  ( +- 113.8 μs  )
+stencil/blur7x7/1024                     mean 237.4 μs  ( +- 49.75 μs  )
+stencil/blur7x7/2048                     mean 391.8 μs  ( +- 71.17 μs  )
+stencil/blur7x7/4096                     mean 3.143 ms  ( +- 5.535 ms  )
+
+stencil/blur9x9/256                      mean 206.8 μs  ( +- 53.03 μs  )
+stencil/blur9x9/512                      mean 223.7 μs  ( +- 34.44 μs  )
+stencil/blur9x9/1024                     mean 243.7 μs  ( +- 43.77 μs  )
+stencil/blur9x9/2048                     mean 536.0 μs  ( +- 56.31 μs  )
+stencil/blur9x9/4096                     mean 2.258 ms  ( +- 42.57 μs  )
+
+matrix/256                               mean 18.70 ms  ( +- 9.495 ms  )
+matrix/512                               mean 12.40 ms  ( +- 12.06 ms  )
+matrix/1024                              mean 15.18 ms  ( +- 12.36 ms  )
+matrix/2048                              mean 37.56 ms  ( +- 14.01 ms  )
+matrix/4096                              mean 252.8 ms  ( +- 20.53 ms  )

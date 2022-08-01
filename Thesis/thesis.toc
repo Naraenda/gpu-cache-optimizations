@@ -35,5 +35,5 @@
 \contentsline {section}{\numberline {5.1}CUDA Benchmarks}{24}{}%
 \contentsline {section}{\numberline {5.2}Hardware Utilization}{26}{}%
 \contentsline {section}{\numberline {5.3}Accelerate Benchmarks}{26}{}%
-\contentsline {chapter}{\numberline {6}Conclusion}{27}{}%
-\contentsline {section}{\numberline {6.1}Future Work}{27}{}%
+\contentsline {chapter}{\numberline {6}Conclusion}{28}{}%
+\contentsline {section}{\numberline {6.1}Future Work}{28}{}%

@@ -165,3 +165,27 @@ However, the column pattern fix stalls on long scoreboard, meaning instruction c
 
 \section{Accelerate Benchmarks}
 \TODO{I don't have access to this data right now oops}
+
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}
+        \begin{axis}[
+            xlabel = Input Size,
+            ylabel = Execution time compared to naive,
+            ymax = 1.5,
+            ybar,
+            height=10cm,
+        ]
+            \addplot table[
+                x expr  = \coordindex,
+                y expr  = \thisrow{optimized_t}/\thisrow{naive_t},
+                col sep = comma,
+            ]{results_linux.csv};
+
+        \end{axis}
+    \end{tikzpicture}
+    \caption{
+        The relative kernel execution time of various column widths compared to the naive implementation for the matrix multiplication of two $N \times N$ matrices. Lower is better.
+    }
+    \label{fig:results_accelerate}
+\end{figure}
