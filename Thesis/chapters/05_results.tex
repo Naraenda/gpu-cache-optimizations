@@ -114,7 +114,7 @@ This exeggerates our earlier assumption (section \ref{sec:implementation_theory}
 \end{figure}
 
 Execution time for matrix multiplication with CBI compared to naive only appears to improve after a certain input size ($2^8$) and has diminishing returns after ($2^10$), see figure \ref{fig:mm_naive_vs_cbi}.
-This might be \TODO{should probably verify} due to saturation of the caches.
+A possible explanation is that after this points caches are completely saturated and fully utilized.
 
 \begin{figure}[H]
     \centering
