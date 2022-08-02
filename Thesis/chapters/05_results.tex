@@ -164,28 +164,47 @@ In both the naive and column pattern, Nvidia Nsight Compute reported that the sc
 However, the column pattern fix stalls on long scoreboard, meaning instruction could not be executed out of order due to a depedency on an unfinished L1TEX (local, global, surface, tex) operation.
 
 \section{Accelerate Benchmarks}
-\TODO{I don't have access to this data right now oops}
+\label{sec:accelerate_benchmark}
+The addition of CBI to accelerate is also benchmarked, and because this modification applies only to Accelerate, it is quite easy to benchmark numerous configurations.
+We benchmark stencils of size $3\times 3$ up to $9\times 9$ and matrix multiplication on square power-of-two input sizes between $256\times 256$ up to $4096\times 4096$.
+The time is the average over multiple runs and the first run, which includes shader compilation, is discarded.
+The relative execution time of these benchmarks, calculated as $\frac{t_{optimized}}{t_{naive}}$ are compiled in figure \ref{fig:results_accelerate}.
+The results vary greatly and most noteable is the significantly longer execution time for \texttt{stencil/blur3x3/4096} (2.6 ms vs 0.6 ms). Contrarily, \texttt{matrix/4096} runs significantly fastr aftr CBI.
+A possible explanation for the former might be that the overhead for CBI within accelerate is excesively large compared to a naive implementation negating all performance gains.
+Investigataing this is difficult because Accelerate does not emit the right debug information for us to sensibly link the generate assembly back to the modified Accelerate backend.
+The overal trend of improvements does reflect the results from the earlier presented C++ implementation: stencils perform worse on larger inputs, while matrix multiplication performs better on larger inputs.
 
 \begin{figure}[H]
     \centering
+    \pgfplotstableread[col sep=comma,]{results_linux.csv}\datatable
     \begin{tikzpicture}
         \begin{axis}[
-            xlabel = Input Size,
+            xlabel = Benchmark,
+            xtick = data,
+            xticklabel style={rotate=60, anchor=north east, inner sep=0mm},
             ylabel = Execution time compared to naive,
             ymax = 1.5,
             ybar,
             height=10cm,
+            xticklabels from table={\datatable}{bench},
         ]
-            \addplot table[
+            \addplot[draw = black, fill = black!15] table[
                 x expr  = \coordindex,
                 y expr  = \thisrow{optimized_t}/\thisrow{naive_t},
                 col sep = comma,
             ]{results_linux.csv};
+            
+            \coordinate (A) at (axis cs:0,1);
+            \coordinate (O1) at (rel axis cs:0,0);
+            \coordinate (O2) at (rel axis cs:1,0);
+            \draw [black,sharp plot] (A -| O1) -- (A -| O2);
 
         \end{axis}
     \end{tikzpicture}
     \caption{
-        The relative kernel execution time of various column widths compared to the naive implementation for the matrix multiplication of two $N \times N$ matrices. Lower is better.
+        The relative kernel execution time of CBI with column width 32 compared to the naive implementation for various benchmarks.
+        Each column is a different benchmark with the input size of $N\times N$ as the suffix.
+        Lower is better.
     }
     \label{fig:results_accelerate}
 \end{figure}
