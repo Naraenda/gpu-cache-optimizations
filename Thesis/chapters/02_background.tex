@@ -3,11 +3,11 @@ The GPU backend of Accelerate only works with CUDA capable devices (see section 
 Therefore, we will mostly focus on the architecture of newer Nvidia GPUs.
 
 \subsection{Hardware}
-On modern Nvidia GPU architectures is composed of multiple GPU Processing Clusters (GPCs), Texture Processing Clusters (TPCs), Streaming Multiprocessors (SMs) and memory controllers.
+Modern Nvidia GPU architectures are composed of multiple GPU Processing Clusters (GPCs), Texture Processing Clusters (TPCs), Streaming Multiprocessors (SMs) and memory controllers.
 The main point of interest are the streaming multiprocessors which handle the data processing.
 The GPU uses a single instruction multiple threads (SIMT) execution model, and the scheduler in each SM dispatches instructions to multiple cores to the various specialized cores for each of the various execution pipelines (single and double precision computation, integer computation, etc.).
 
-On the Turing, Volta and Ampera architectures each SM has 4 warp schedulers and the accompanying pipelines and therefore \citeauthor{jia2019dissecting} suggests that a threadblock should contain at least 128 threads due to SMs on Turing, Volta, and Ampere being split into four processing blocks so at least all 4 schedulures can be completely utilized. \cite{jia2019dissecting,nvidia2017volta,nvidia2018turing,nvidia2020ampere}.
+On the Turing, Volta and Ampera architectures, each SM has four warp schedulers and the accompanying pipelines and therefore \citet{jia2019dissecting} suggests that a threadblock should contain at least 128 threads due to SMs on Turing, Volta, and Ampere being split into four processing blocks so at least all 4 schedulures can be completely utilized. \cite{jia2019dissecting,nvidia2017volta,nvidia2018turing,nvidia2020ampere}.
 The memory is structured in a multi-level hierarchy containing an L1 cache for each SM, a shared L2 cache for all SMs and multiple banks of DRAM \cite{nvidia2017volta,nvidia2020ampere} (figure \ref{fig:ampere_architecture}).
 Data can be shared between threads in the same cooperative thread array (CTA), and therefore on the same SM, via the L1 cache and between all threads via L2 cache.
 
@@ -61,18 +61,22 @@ An LRU eviction policy evicts data that is the least recently used.
 P-chase defines an array of indices where each element points to the next index to fetch from the array, thus chasing the pointer.
 
 \citet{jia2019dissecting} have shown that in Turing and Volta GPUs, the P-chase benchmark that is used to detect the LRU eviction policy presented by \citet{mei2016dissecting} fails to complete over the full L1 cache.
-\citeauthor{jia2019dissecting} conclude that newer architectures (Turing, Volta) uses a non-LRU eviction policy \cite{jia2019dissecting, jia2018dissecting,mei2016dissecting}.
+\citeauthor{jia2019dissecting} conclude that newer architectures (Turing, Volta) use a non-LRU eviction policy \cite{jia2019dissecting, jia2018dissecting,mei2016dissecting}.
 When the L1 cache in Turing and Volta GPU saturates, 4 consecutive cache lines are chosen randomly to be evicted.
 This is in line with a new eviction policy mechanism introduced with Volta, where cache lines can be assigned a priority \cite{jia2019dissecting,nvidia2021cudadocs}.
 
-On the Turing architecture \citeauthor{jia2019dissecting} has found with the P-chase benchmark that the memory access latancy for a L2 cache miss and TLB miss to be 616 cycles.
-On a L1 cache hit (best case scenario) the latency is 32 cycles.
-For a L2 cache hit this rises to a latency of 188 cycles.
-With L2 miss but a TLB hit the latency becomes 296 cycles.
+On the Turing architecture \citet{jia2019dissecting} has found with the P-chase benchmark that the memory access latency for a:
+\begin{itemize}
+    \item L1 cache hit (best case scenario) to have a latency of 32 cycles.
+    \item L2 cache hit to have a latency of 188 cycles.
+    \item L2 miss but a TLB hit to have a latency of 296 cycles.
+    \item L2 cache miss and TLB miss to have a latency of 616 cycles.
+\end{itemize}
+Which shows that having all relevant data in cache, especially L1, is key to high data throughput.
 
 Modern Nvidia GPUs are able to handle various types cache operations and eviction hints.
 By default, loads are cached at all levels (L2, L1) with an LRU policy.
-This brings a problem with it: if data is writen to a cached value, we need to evict this cache line from all other L1 caches first, since that value is no longer up to date after our update.
+This brings a problem with it: if data is written to a cached value, we need to evict this cache line from all other L1 caches first, since that value is no longer up to date after our update.
 As an example, it is also possible to only cache on L2, bypassing L1.
 Another option is to hint cache streaming, where the loaded cache line will have an evict-first policy to prevent polution of the cache.
 Similar operations exist for writing data to memory.
@@ -122,11 +126,12 @@ In both cases it is up to the compiler and programmer to exploit this for extra 
 
 \subsection{Kernel Execution}
 \label{sec:kernel_execution}
-When working with CUDA the programmer defines a kernel.
-This is normally done with CUDA C++, an extension on C++ programming language, but in our case Accelerate will handle the generation of kernels (section \ref{sec:accelerate}) \cite{nvidia2021cudadocs}.
+When working with CUDA, the programmer produces \textit{kernels}, define the functions that should be executed on the GPU.
+This is normally done with CUDA C++, an extension on C++ programming language, but other methods of compiling for the GPU is also possible. 
+In our case Accelerate will handle the generation of kernels (section \ref{sec:accelerate}) \cite{nvidia2021cudadocs}.
 
 Executions on a GPU are directed on both the host and device (GPU).
-\textit{Kernels} define the functions that should be executed on the GPU.
+
 The host side controls how these kernels should be executed, namely how the threads should be launched and executed.
 Threads are grouped and defined on a 2 level hierarchy: threads are grouped together in \textit{cooperative thread arrays} (CTAs), also known as thread blocks, and multiple CTAs can be queued for the execution of a single kernel.
 Both can be controlled upon executing a kernel: the number of threads per CTA (threadblock size) and the total number of CTAs (gridsize).
@@ -192,12 +197,12 @@ GPUs consist out of many more cores compared to CPUs, however this also comes in
 Due to the CPUs being focused on single threads, it can exploit better branch prediction.
 Another hardware specific optimization available is prefetching, where instructions and data can be loaded into cache that are likely to be needed in the near future.
 
-While GPUs can exploit its SIMT nature for parallelization, CPUs may implement single instruction, multiple data (SIMD). For example, Streaming SIMD Extensions (SSE) and Advanced Vector Extensions (AVX, AVX2, and AVX-512) allows CPU to process multiple data with singular instructions.
+While GPUs can exploit its SIMT nature for parallelization, CPUs may implement single instruction, multiple data (SIMD). For example, Streaming SIMD Extensions (SSE) and Advanced Vector Extensions (AVX, AVX2, and AVX-512) allow CPUs to process multiple data with singular instructions.
 SSE can handle four 32-bit single-precision floating point numbers while AVX and AVX2 handle eight.
 AVX-512 can handle sixteen, but is not widely implemented.
 
 Caches also share the same hierarchical structure as the cores, however this differs per manufacturer and architecture.
-Often the cache L1 is local to each thread, and L2 local to each core with 2 threads per core.
+Often the L1 cache is local to each thread, and L2 local to each core with 2 threads per core.
 
 \section{Accelerate}
 \label{sec:accelerate}
@@ -225,7 +230,7 @@ Cross interference assumes the location of data in memory is unrelated to the lo
 Self interference extends this by taking the cache locations of variables into account, which can happen when the data for a single iteration no longer fits in cache.
 
 \subsection{CTA Clustering}
-\citet{li2017locality} presented a clustering algorithm for reorder threads to improve cache performance on GPU.
+\citet{li2017locality} presented a clustering algorithm for thread reordering to improve cache performance on GPUs.
 It replaces a kernel with a new one with predefined clustering rules.
 CTAs with inter-CTA locality are clustered together which can then be assigned to SMs.
 The work in these clusters can be bounded to SMs in two ways:

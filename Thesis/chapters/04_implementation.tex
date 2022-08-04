@@ -150,7 +150,7 @@ As a result we might not be able to exploit the cache as much since column order
 
 \subsection{Zigzagging variation}
 When working in warps of 32-threads and having a non-multiple of 32 wide columns, the workload for a warp may be spread out due to the tail end of our task being put at the beginning of the next row.
-A solution to this may be to zigzag every other row such that when working on another row, our accesses are still local.
+By reversing the order of every other row, we can keep accesses local to each other when they span multiple rows.
 We can modify equation \ref{eq:column_mapping_to_j}:
 
 \begin{equation}
@@ -162,8 +162,8 @@ We can modify equation \ref{eq:column_mapping_to_j}:
 \end{equation}
 
 \subsection{Higher dimensions}
-Since only work horizontally gets split, this algorithm may work on higher dimensions since in N-dimensional arrays, only one dimension can properly benefit from spatial locality.
-All other dimensions can only exploit temporal locality.
+Since works only gets split horizontally, namely the one dimension that benefits from spatial locality, this algorithm can work on higher dimensions.
+All other dimensions can only exploit temporal locality and do not benefit from spatial locaity.
 We can therefore encapsulate an N-dimensional problem into 2-dimensional (horziontal and vertical) one, by mapping all but the first dimension to the vertical dimension.
 
 \section{Implementation}
@@ -478,7 +478,7 @@ Solving for column width $c$ gives
     c = \frac{M_{size} - u (s_h s_w + t)}{s_h u}
 \]
 
-The amount of fetches is similar to equation \ref{eq:stencil_tiling_fetches}, however, since we do not divide the work horizontally anymore, the amount of cache line fetches is slightly less:
+The amount of fetches is similar to equation \ref{eq:stencil_tiling_fetches}, however, since we do not divide the work horizontally anymore, the number of cache line fetches is slightly lower:
 
 \begin{equation}
     F \leq \ceil{\frac{I_w}{c}}\ceil{\frac{c + S_w}{L}} (I_h + S_h)
@@ -486,7 +486,7 @@ The amount of fetches is similar to equation \ref{eq:stencil_tiling_fetches}, ho
 \end{equation}
 
 \section{Matrix Multiplication}
-Matrix multiplication may benefit from a column based approach due to many vertical reads.
+Matrix multiplication can benefit from a column based approach due to many vertical reads.
 Section \ref{sec:access_patterns} showed that continuous vertical reads are more expensive than continuous horizontal reads (streaming).
 Therefore, we want to keep data that is read vertically in cache for as long as possible.
 The naive implementation (section \ref{sec:matrix_naive}) showed that working on an entire row of outputs requires to load the whole $I_w \times D$ data

@@ -1,10 +1,10 @@
-Column based iteration (CBI) is a variation on tiling where we only split work only on one axis in a multidimensional workload. 
+Column based iteration (CBI) is a variation on tiling where we only split work on one axis in a multidimensional workload. 
 It improves the performance of naive stencil (up to 8\%) and matrix multiplication (up to 28\%) operations.
 
 We improve hitrates of the L1 cache by a significant amount (from 19\% to 77\%).
 Usually, a column width of 32, 64, or 128 is ideal as this allows us to more properly utilize the warp (32 threads), cache lines (128 bytes = 32 $\times$ 4 bytes), and scheduler (4 warps).
 Wheras CBI improves performance over naive matrix multiplication, specializd algorithms (as implemnted in cuBLAS/CUTLASS) are faster than our thread rescheduling.
-Unfortunately, the performance increase within Accelerate is less consistent, and sometimes performs significantly worse, than our C++ and CUDA implementation. 
+Unfortunately, the performance increase within Accelerate is less consistent, and sometimes performs significantly worse (execution times of 50\% or more), than our C++ and CUDA implementation which saw a more consistent trend. 
 
 \section{Future Work}
 While column based iteration does improve performance there are still areas for possible improvements.

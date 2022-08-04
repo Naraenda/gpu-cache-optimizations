@@ -1,11 +1,11 @@
 Graphics Processing Units (GPUs) are specialized hardware that can manipulate large amounts of data in a highly parallel manner.
 The hardware's main purpose is processing graphical data, however modern use of GPUs is in the form of general-pupose computing on the GPU (GPGPU) where we exploit the GPUs many cores to run computations normally run on CPUs in parallel.
 
-This high performance GPU computing has become very accessible via high-level programming languages and libraries, which provide a limited set of operators, such as stencil, permute, fold, scan, which can manipulate data on a GPU \cite{chakravarty2011accelerating}.
-An obvious drawback of high-level languages is that low-level interfaces of the hardware become less available as the compiler and libraries handle these.
+High performance GPU computing has become very accessible via high-level programming languages and libraries, which provide a limited set of operators, such as stencil computations, permute, fold, scan, which can manipulate data on a GPU \cite{chakravarty2011accelerating}.
+An obvious drawback of high-level languages is that low-level interfaces of the hardware become less available to the programmer as the compiler and libraries handle these.
 In most cases, the compiled assembly has inefficient memory accesses with lower cache hit rates and uncoalesced accesses compared to manually tweaked code which requires in-depth knowledge about the architecture.
 On the other hand, any optimizations done to the compiler or library will benefit most programs.
-An approach that fits between improving the compiler and programmer skill, is to improve the thread scheduler.
+An approach that fits between improving the compiler and programmer skill is to improve the thread scheduler.
 A smarter scheduler can achieve better cache and memory utilization \cite{nugteren2014study}.
 We propose a simple schedule to improve performance by leveraging the structure of memory accesses in the high level GPGPU framework Accelerate \cite{chakravarty2011accelerating}.
 
@@ -13,13 +13,14 @@ We propose a simple schedule to improve performance by leveraging the structure 
 
 \section{Contributions}
 This thesis shows that the cache efficiency for stencil and matrix multiplication can be improved compared to the naive implementation and the more common tiling approach, by rescheduling via index mapping.
-While the main focus lies in improving the performance on GPU, the techniques presented can also be applied on a CPU.
+While the main focus lies in improving the performance on GPUs, the techniques presented can also be applied on a CPU.
 
 \vspace{1em}
 The main contributions of this thesis are:
 \begin{itemize}
     \item An analysis of the theoretical cache utilization and efficiency of both linear and multithreaded (GPU) execution for naive and tiled implementations of stencil and matrix multiplication operations.
-    \item A simple implementeable schedule and benchmark for stencil and matrix multiplication operations that improve cache efficiency and therefore performance compared to the naive and tiling implementation.
+    \item A simple implementable schedule that improves cache efficiency and therefore performance compared to the naive and tiling implementation.
+    \item A benchmark for stencil and matrix multiplication operations to measure performance to the new schedule to the naive implementation.
     \item An analysis of the theoretical cache utilization and efficiency of a column-based scheduler.
 \end{itemize}
 

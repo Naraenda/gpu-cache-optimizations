@@ -24,16 +24,16 @@
 \contentsline {section}{\numberline {3.4}Matrix Multiplication}{14}{}%
 \contentsline {subsection}{\numberline {3.4.1}Naive}{14}{}%
 \contentsline {subsection}{\numberline {3.4.2}Tiling}{15}{}%
-\contentsline {chapter}{\numberline {4}Column Based Iteration}{16}{}%
-\contentsline {section}{\numberline {4.1}Theory}{16}{}%
-\contentsline {subsection}{\numberline {4.1.1}Zigzagging variation}{17}{}%
-\contentsline {subsection}{\numberline {4.1.2}Higher dimensions}{17}{}%
-\contentsline {section}{\numberline {4.2}Implementation}{17}{}%
-\contentsline {section}{\numberline {4.3}Stencil Operation}{18}{}%
-\contentsline {section}{\numberline {4.4}Matrix Multiplication}{19}{}%
-\contentsline {chapter}{\numberline {5}Results}{24}{}%
-\contentsline {section}{\numberline {5.1}CUDA Benchmarks}{24}{}%
-\contentsline {section}{\numberline {5.2}Hardware Utilization}{26}{}%
-\contentsline {section}{\numberline {5.3}Accelerate Benchmarks}{26}{}%
-\contentsline {chapter}{\numberline {6}Conclusion}{28}{}%
-\contentsline {section}{\numberline {6.1}Future Work}{28}{}%
+\contentsline {chapter}{\numberline {4}Column Based Iteration}{17}{}%
+\contentsline {section}{\numberline {4.1}Theory}{17}{}%
+\contentsline {subsection}{\numberline {4.1.1}Zigzagging variation}{18}{}%
+\contentsline {subsection}{\numberline {4.1.2}Higher dimensions}{18}{}%
+\contentsline {section}{\numberline {4.2}Implementation}{18}{}%
+\contentsline {section}{\numberline {4.3}Stencil Operation}{19}{}%
+\contentsline {section}{\numberline {4.4}Matrix Multiplication}{20}{}%
+\contentsline {chapter}{\numberline {5}Results}{25}{}%
+\contentsline {section}{\numberline {5.1}CUDA Benchmarks}{25}{}%
+\contentsline {section}{\numberline {5.2}Hardware Utilization}{27}{}%
+\contentsline {section}{\numberline {5.3}Accelerate Benchmarks}{27}{}%
+\contentsline {chapter}{\numberline {6}Conclusion}{29}{}%
+\contentsline {section}{\numberline {6.1}Future Work}{29}{}%

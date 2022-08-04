@@ -147,8 +147,9 @@
 \chapter*{Abstract}
 Efficient cache utilization is critical in programs with high data throughput.
 Improving performance in this area often requires niche knowledge of computer architecture, extensive benchmarking, and algorithms that do more than intuively required.
-By changing the order on which tasks are executed, the order in wich memory gets accessed gets changed, which allows us to manipulate how caches get used.
-This thesis proposes a column based iterator which reschedules a 2D workload.
+By changing the order in which tasks are executed, the order in which memory gets accessed gets changed.
+This way, we can manipulate how caches get used.
+This thesis proposes a column iterator which reschedules a 2D workload.
 We show that performance can be increased compared to the naive method by implementing the proposed method in C++ with CUDA and as an extension to the data parallel DSL Accelerate.
 
 \tableofcontents

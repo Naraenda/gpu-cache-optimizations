@@ -3,7 +3,7 @@ Both implementations are benchmarking stencil operations and matrix multiplicati
 
 \section{CUDA Benchmarks}
 
-Two simple problems have been implemented as a simple CUDA program: a $9 \times 9$ stencil operation on a $4096 \times 4096$ input, and a matrix multiplication on two $1024 \times 1024$ arrays of 32-bit floating point numbers.
+Two simple problems are implemented in two CUDA programs: a $9 \times 9$ stencil operation on a $4096 \times 4096$ input, and a matrix multiplication on two $1024 \times 1024$ arrays of 32-bit floating point numbers.
 We execute the program naively, with the no remapping, and with our optimization: column based iteration.
 The kernel is analyzed with Nvidia profiler (\texttt{nvprof}) and Nvidia Nsight Compute CLI (\texttt{ncu}).
 Contrary to our expectations, the kernel execution time seems to be not correlated to our estimated column width at all, instead prefering lower multiple of 32 widths regardless of block size (figure \ref{fig:cuda_kernel_times}).
@@ -52,10 +52,10 @@ Contrary to our expectations, the kernel execution time seems to be not correlat
     \label{fig:cuda_kernel_times}
 \end{figure}
 
-The factor of 32 seems to be independent of input size and upholds during non power of 2 inputs (figure \ref{fig:cuda_kernel_time_stencil_no_pow2}).
+The factor of 32 seems to be independent of input size and are not affected by no power of 2 inputs (figure \ref{fig:cuda_kernel_time_stencil_no_pow2}).
 Changing the data type to half precision (16-bit) floating points had effect on the overal improvements.
 Using 64-bit double precision floating points made the kernel compute bound instead of memory bound and therefore no tangible difference between the naive implementation and any column remapping is observed.
-This exeggerates our earlier assumption (section \ref{sec:implementation_theory}) that the 32 thread wide warps might play a role.
+This confirms our earlier assumption (section \ref{sec:implementation_theory}) that the 32 thread wide warps might play a role.
 
 \begin{figure}[H]
     \centering
@@ -158,14 +158,14 @@ A possible explanation is that after this points caches are completely saturated
 \section{Hardware Utilization}
 On the $1024 \times 1024$ matrix multiplication, running a 32 wide column patterns resulted in an improvement to the L1 cache hit rate from 19.49\% to 77.40\%.
 This results in a drop in transferred data from L2 to L1 cache from 4.02 GB to 1.13 GB. 
-The L2 hit rate dropped from 98.52\% in the naive case to 95.73\%.
+The L2 hit rate dropped from 98.52\% in the naive case, to 95.73\% with CBI.
 
 In both the naive and column pattern, Nvidia Nsight Compute reported that the scheduler is stalling due to the L1 instruction queue for local and global memory operation being full.
 However, the column pattern fix stalls on long scoreboard, meaning instruction could not be executed out of order due to a depedency on an unfinished L1TEX (local, global, surface, tex) operation.
 
 \section{Accelerate Benchmarks}
 \label{sec:accelerate_benchmark}
-The addition of CBI to accelerate is also benchmarked, and because this modification applies only to Accelerate, it is quite easy to benchmark numerous configurations.
+The addition of CBI to Accelerate is also benchmarked, and because this modification applies only to Accelerate, it is quite easy to benchmark numerous configurations.
 We benchmark stencils of size $3\times 3$ up to $9\times 9$ and matrix multiplication on square power-of-two input sizes between $256\times 256$ up to $4096\times 4096$.
 The time is the average over multiple runs and the first run, which includes shader compilation, is discarded.
 The relative execution time of these benchmarks, calculated as $\frac{t_{optimized}}{t_{naive}}$ are compiled in figure \ref{fig:results_accelerate}.
